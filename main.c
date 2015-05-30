@@ -16,6 +16,7 @@
 
 #include "header.h"
 
+/* Return the current system time in micro seconds */
 static inline uint64_t timestamp_us()
 {
 	struct timeval tv;
@@ -27,10 +28,10 @@ int main(int argc, char *argv[])
 {
 	double* volatile matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* volatile result_naive  = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* volatile result  = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile reference = calloc(WIDTH*HEIGHT, sizeof(double));
 
-	/* initialize matrix with random double-precision floating number in (0,1) range */
+	/* Initialize matrix with random double-precision floating number in (0,1) range */
 	srand (time(NULL));
 
 	for(int i = 0; i < WIDTH; i++)
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* calculate the reference.*/
+	/* Calculate the reference.*/
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int j = 0; j < HEIGHT; j++)
@@ -54,14 +55,37 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	uint64_t start = timestamp_us();
+
+	uint64_t start;
+	double naive_time, openmp_time;
+	int naive_error, openmp_error;
+
+	/* Do calculations */
+	start = timestamp_us();
 	/* calculate the correct result */
-	optimization_naive(result_naive, matrix1, matrix2);
-	printf("Time: %.6f\n", (timestamp_us() - start) / 1000000.0);
-	printf("%d", compare_matrix(result_naive, reference));
+	optimization_naive(result, matrix1, matrix2);
+	naive_time = (timestamp_us() - start) / 1000000.0;
+	printf("naive:  %.6f\n", naive_time);
+	naive_error = compare_matrix(result, reference);
+
+	start = timestamp_us();
+	optimization_openmp(result, matrix1, matrix2);
+	openmp_time = (timestamp_us() - start) / 1000000.0;
+	printf("openmp: %.6f\n", openmp_time);
+	openmp_error = compare_matrix(result, reference);
+
+	/* Error handling*/
+	if (naive_error) {
+		printf("The result of naive is wrong\n");
+	}
+	if (openmp_error) {
+		printf("The result of openmp is wrong\n");
+	}
+
+	/* Clean up */
 	free(matrix1);
 	free(matrix2);
-	free(result_naive);
+	free(result);
 	free(reference);
 	return 0;
 }

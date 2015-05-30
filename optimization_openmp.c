@@ -1,8 +1,9 @@
 #include "header.h"
 
-void optimization_naive(double* restrict result,
+void optimization_openmp(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
+	#pragma omp parallel for
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int j = 0; j < HEIGHT; j++)
