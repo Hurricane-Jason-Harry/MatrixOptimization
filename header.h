@@ -4,6 +4,9 @@
 #define WIDTH 512
 #define HEIGHT 512
 
-int compare_matrix(double* sample, double* reference);
+extern int compare_matrix(double* sample, double* reference);
+
+extern void optimization_naive(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2);
 
 #endif

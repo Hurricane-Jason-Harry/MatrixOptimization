@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 {
 	double* volatile matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* volatile result  = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* volatile result_naive  = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile reference = calloc(WIDTH*HEIGHT, sizeof(double));
 
 	/* initialize matrix with random double-precision floating number in (0,1) range */
@@ -42,25 +42,26 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	uint64_t start = timestamp_us();
-
-	/* calculate the correct result */
+	/* calculate the reference.*/
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int j = 0; j < HEIGHT; j++)
 		{
 			for (int k = 0; k < WIDTH; k++)
 			{
-				result[i*WIDTH+j] += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
 				reference[i*WIDTH+j] += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
 			}
 		}
 	}
+
+	uint64_t start = timestamp_us();
+	/* calculate the correct result */
+	optimization_naive(result_naive, matrix1, matrix2);
 	printf("Time: %.6f\n", (timestamp_us() - start) / 1000000.0);
-	printf("%d", compare_matrix(result, reference));
+	printf("%d", compare_matrix(result_naive, reference));
 	free(matrix1);
 	free(matrix2);
-	free(result);
+	free(result_naive);
 	free(reference);
 	return 0;
 }
