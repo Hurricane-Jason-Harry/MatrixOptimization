@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
 {
 	double* volatile matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* volatile result  = calloc(WIDTH*HEIGHT, sizeof(double));
 	double* volatile reference = calloc(WIDTH*HEIGHT, sizeof(double));
 
 	/* Initialize matrix with random double-precision floating number in (0,1) range */
@@ -59,26 +58,34 @@ int main(int argc, char *argv[])
 	uint64_t start;
 	double naive_time, openmp_time, simd_time;
 	int naive_error, openmp_error, simd_error;
+	double* volatile naive_result;
+	double* volatile openmp_result;
+	double* volatile simd_result;
 
 	/* Do calculations */
+	naive_result = calloc(WIDTH*HEIGHT, sizeof(double));
 	start = timestamp_us();
-	/* calculate the correct result */
-	optimization_naive(result, matrix1, matrix2);
+	optimization_naive(naive_result, matrix1, matrix2);
 	naive_time = (timestamp_us() - start) / 1000000.0;
 	printf("naive:  %.6f\n", naive_time);
-	naive_error = compare_matrix(result, reference);
+	naive_error = compare_matrix(naive_result, reference);
+	free(naive_result);
 
+	openmp_result = calloc(WIDTH*HEIGHT, sizeof(double));
 	start = timestamp_us();
-	optimization_openmp(result, matrix1, matrix2);
+	optimization_openmp(openmp_result, matrix1, matrix2);
 	openmp_time = (timestamp_us() - start) / 1000000.0;
 	printf("openmp: %.6f\n", openmp_time);
-	openmp_error = compare_matrix(result, reference);
+	openmp_error = compare_matrix(openmp_result, reference);
+	free(openmp_result);
 
+	simd_result = calloc(WIDTH*HEIGHT, sizeof(double));
 	start = timestamp_us();
-	optimization_simd(result, matrix1, matrix2);
+	optimization_simd(simd_result, matrix1, matrix2);
 	simd_time = (timestamp_us() - start) / 1000000.0;
 	printf("simd: %.6f\n", simd_time);
-	simd_error = compare_matrix(result, reference);
+	simd_error = compare_matrix(simd_result, reference);
+	free(simd_result);
 
 	/* Error handling*/
 	if (naive_error) {
@@ -94,7 +101,6 @@ int main(int argc, char *argv[])
 	/* Clean up */
 	free(matrix1);
 	free(matrix2);
-	free(result);
 	free(reference);
 	return 0;
 }
