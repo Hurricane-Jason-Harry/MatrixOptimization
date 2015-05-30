@@ -2,6 +2,7 @@
 #define MATRIX_OPTIMIZATION_HEADER
 
 #include <string.h>
+#include <immintrin.h>
 
 #define WIDTH 512
 #define HEIGHT 512
@@ -12,6 +13,9 @@ extern void optimization_naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
 extern void optimization_openmp(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2);
+
+extern void optimization_simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
 #endif

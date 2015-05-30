@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 
 
 	uint64_t start;
-	double naive_time, openmp_time;
-	int naive_error, openmp_error;
+	double naive_time, openmp_time, simd_time;
+	int naive_error, openmp_error, simd_error;
 
 	/* Do calculations */
 	start = timestamp_us();
@@ -74,12 +74,21 @@ int main(int argc, char *argv[])
 	printf("openmp: %.6f\n", openmp_time);
 	openmp_error = compare_matrix(result, reference);
 
+	start = timestamp_us();
+	optimization_simd(result, matrix1, matrix2);
+	simd_time = (timestamp_us() - start) / 1000000.0;
+	printf("simd: %.6f\n", simd_time);
+	simd_error = compare_matrix(result, reference);
+
 	/* Error handling*/
 	if (naive_error) {
 		printf("The result of naive is wrong\n");
 	}
 	if (openmp_error) {
 		printf("The result of openmp is wrong\n");
+	}
+	if (simd_error) {
+		printf("The result of simd is wrong\n");
 	}
 
 	/* Clean up */
