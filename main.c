@@ -14,8 +14,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define MATRIX_WIDTH 512
-#define MATRIX_HEIGHT 512
+#include "header.h"
 
 static inline uint64_t timestamp_us()
 {
