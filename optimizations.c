@@ -119,26 +119,60 @@ void optimization_loop_unrolling(double* restrict result,
 
 void optimization_register_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
+
 	for (int i = 0; i < WIDTH; i++)
 	{
-		for (int j = 0; j < HEIGHT; j+=4)
+		for (int j = 0; j < HEIGHT/10*10; j+=10)
 		{
 			double sum0 = 0;
 			double sum1 = 0;
 			double sum2 = 0;
 			double sum3 = 0;
+			double sum4 = 0;
+			double sum5 = 0;
+			double sum6 = 0;
+			double sum7 = 0;
+			double sum8 = 0;
+			double sum9 = 0;
 			for (int k = 0; k < WIDTH; k++)
 			{
 				double m = matrix1[i*WIDTH+k];
-				sum0 += m*matrix2[k*WIDTH+j];
-				sum1 += m*matrix2[k*WIDTH+j+1];
-				sum2 += m*matrix2[k*WIDTH+j+2];
-				sum3 += m*matrix2[k*WIDTH+j+3];
+				int kwj = k*WIDTH+j;
+				sum0 += m*matrix2[kwj];
+				sum1 += m*matrix2[kwj+1];
+				sum2 += m*matrix2[kwj+2];
+				sum3 += m*matrix2[kwj+3];
+				sum4 += m*matrix2[kwj+4];
+				sum5 += m*matrix2[kwj+5];
+				sum6 += m*matrix2[kwj+6];
+				sum7 += m*matrix2[kwj+7];
+				sum8 += m*matrix2[kwj+8];
+				sum9 += m*matrix2[kwj+9];
 			}
-			result[i*WIDTH+j]   = sum0;
-			result[i*WIDTH+j+1] = sum1;
-			result[i*WIDTH+j+2] = sum2;
-			result[i*WIDTH+j+3] = sum3;
+			int iwj = i*WIDTH+j;
+			result[iwj]   = sum0;
+			result[iwj+1] = sum1;
+			result[iwj+2] = sum2;
+			result[iwj+3] = sum3;
+			result[iwj+4] = sum4;
+			result[iwj+5] = sum5;
+			result[iwj+6] = sum6;
+			result[iwj+7] = sum7;
+			result[iwj+8] = sum8;
+			result[iwj+9] = sum9;
+		}
+	}
+
+	for (int i = 0; i < WIDTH; i++)
+	{
+		for (int j = HEIGHT/10*10; j < HEIGHT; j++)
+		{
+			double sum = 0;
+			for (int k = 0; k < WIDTH; k++)
+			{
+				sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
+			}
+			result[i*WIDTH+j] = sum;
 		}
 	}
 }
