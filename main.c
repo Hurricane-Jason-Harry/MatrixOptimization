@@ -26,9 +26,9 @@ static inline uint64_t timestamp_us()
 
 int main(int argc, char *argv[])
 {
-	double* matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* reference = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* matrix1 = malloc(WIDTH*HEIGHT*sizeof(double));
+	double* matrix2 = malloc(WIDTH*HEIGHT*sizeof(double));
+	double* reference = malloc(WIDTH*HEIGHT*sizeof(double));
 
 	/* Initialize matrix with random double-precision floating number in (0,1) range */
 	srand (time(NULL));
@@ -47,23 +47,26 @@ int main(int argc, char *argv[])
 	{
 		for (int j = 0; j < HEIGHT; j++)
 		{
+			double temp = 0;
 			for (int k = 0; k < WIDTH; k++)
 			{
-				reference[i*WIDTH+j] += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
+				temp += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
 			}
+			reference[i*WIDTH+j] = temp;
 		}
 	}
 
 
 	uint64_t start;
-	double naive_time, openmp_time, simd_time;
-	int naive_error, openmp_error, simd_error;
+	double naive_time, openmp_time, simd_time, cache_blocking_time;
+	int naive_error, openmp_error, simd_error, cache_blocking_error;
 	double* naive_result;
 	double* openmp_result;
 	double* simd_result;
+	double* cache_blocking_result;
 
 	/* Do calculations */
-	naive_result = calloc(WIDTH*HEIGHT, sizeof(double));
+	naive_result = malloc(WIDTH*HEIGHT*sizeof(double));
 	start = timestamp_us();
 	optimization_naive(naive_result, matrix1, matrix2);
 	naive_time = (timestamp_us() - start) / 1000000.0;
@@ -71,7 +74,7 @@ int main(int argc, char *argv[])
 	naive_error = compare_matrix(naive_result, reference);
 	free(naive_result);
 
-	openmp_result = calloc(WIDTH*HEIGHT, sizeof(double));
+	openmp_result = malloc(WIDTH*HEIGHT*sizeof(double));
 	start = timestamp_us();
 	optimization_openmp(openmp_result, matrix1, matrix2);
 	openmp_time = (timestamp_us() - start) / 1000000.0;
@@ -79,13 +82,21 @@ int main(int argc, char *argv[])
 	openmp_error = compare_matrix(openmp_result, reference);
 	free(openmp_result);
 
-	simd_result = calloc(WIDTH*HEIGHT, sizeof(double));
+	simd_result = malloc(WIDTH*HEIGHT*sizeof(double));
 	start = timestamp_us();
 	optimization_simd(simd_result, matrix1, matrix2);
 	simd_time = (timestamp_us() - start) / 1000000.0;
 	printf("simd: %.6f\n", simd_time);
 	simd_error = compare_matrix(simd_result, reference);
 	free(simd_result);
+
+	cache_blocking_result = malloc(WIDTH*HEIGHT*sizeof(double));
+	start = timestamp_us();
+	optimization_cache_blocking(cache_blocking_result, matrix1, matrix2);
+	cache_blocking_time = (timestamp_us() - start) / 1000000.0;
+	printf("cache blocking: %.6f\n", cache_blocking_time);
+	cache_blocking_error = compare_matrix(cache_blocking_result, reference);
+	free(cache_blocking_result);
 
 	/* Error handling*/
 	if (naive_error) {
@@ -96,6 +107,9 @@ int main(int argc, char *argv[])
 	}
 	if (simd_error) {
 		printf("The result of simd is wrong\n");
+	}
+	if (cache_blocking_error) {
+		printf("The result of cache blocking is wrong\n");
 	}
 
 	/* Clean up */

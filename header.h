@@ -18,4 +18,7 @@ extern void optimization_openmp(double* restrict result,
 extern void optimization_simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
+extern void optimization_cache_blocking(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2);
+
 #endif
