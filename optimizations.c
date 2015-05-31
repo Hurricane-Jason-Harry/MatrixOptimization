@@ -95,22 +95,24 @@ void optimization_loop_unrolling(double* restrict result,
 			double sum = 0;
 			for (int k = 0; k < WIDTH; k+=16)
 			{
-				sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+1]*matrix2[(k+1)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+2]*matrix2[(k+2)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+3]*matrix2[(k+3)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+4]*matrix2[(k+4)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+5]*matrix2[(k+5)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+6]*matrix2[(k+6)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+7]*matrix2[(k+7)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+8]*matrix2[(k+8)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+9]*matrix2[(k+9)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+10]*matrix2[(k+10)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+11]*matrix2[(k+11)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+12]*matrix2[(k+12)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+13]*matrix2[(k+13)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+14]*matrix2[(k+14)*WIDTH+j];
-				sum += matrix1[i*WIDTH+k+15]*matrix2[(k+15)*WIDTH+j];
+				int iwk = i*WIDTH+k;
+				int kw = k*WIDTH;
+				sum += matrix1[iwk]*matrix2[kw+j];
+				sum += matrix1[iwk+1]*matrix2[kw+WIDTH+j];
+				sum += matrix1[iwk+2]*matrix2[kw+2*WIDTH+j];
+				sum += matrix1[iwk+3]*matrix2[kw+3*WIDTH+j];
+				sum += matrix1[iwk+4]*matrix2[kw+4*WIDTH+j];
+				sum += matrix1[iwk+5]*matrix2[kw+5*WIDTH+j];
+				sum += matrix1[iwk+6]*matrix2[kw+6*WIDTH+j];
+				sum += matrix1[iwk+7]*matrix2[kw+7*WIDTH+j];
+				sum += matrix1[iwk+8]*matrix2[kw+8*WIDTH+j];
+				sum += matrix1[iwk+9]*matrix2[kw+9*WIDTH+j];
+				sum += matrix1[iwk+10]*matrix2[kw+10*WIDTH+j];
+				sum += matrix1[iwk+11]*matrix2[kw+11*WIDTH+j];
+				sum += matrix1[iwk+12]*matrix2[kw+12*WIDTH+j];
+				sum += matrix1[iwk+13]*matrix2[kw+13*WIDTH+j];
+				sum += matrix1[iwk+14]*matrix2[kw+14*WIDTH+j];
+				sum += matrix1[iwk+15]*matrix2[kw+15*WIDTH+j];
 			}
 			result[i*WIDTH+j] = sum;
 		}
