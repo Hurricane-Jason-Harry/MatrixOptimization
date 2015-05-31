@@ -46,15 +46,16 @@ int main(int argc, char *argv[])
 
 	uint64_t start;
 	double naive_time, openmp_time, simd_time, cache_blocking_time,
-		loop_unrolling_time, register_blocking_time;
+		loop_unrolling_time, register_blocking_time, openmp_simd_time;
 	int openmp_error, simd_error, cache_blocking_error, loop_unrolling_error,
-		register_blocking_error;
+		register_blocking_error, openmp_simd_error;
 	double* naive_result;
 	double* openmp_result;
 	double* simd_result;
 	double* cache_blocking_result;
 	double* loop_unrolling_result;
 	double* register_blocking_result;
+	double* openmp_simd_result;
 
 	/* Do calculations */
 	naive_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
@@ -104,6 +105,14 @@ int main(int argc, char *argv[])
 	register_blocking_error = compare_matrix(register_blocking_result, naive_result);
 	_mm_free(register_blocking_result);
 
+	openmp_simd_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+	start = timestamp_us();
+	optimization_openmp_simd(openmp_simd_result, matrix1, matrix2);
+	openmp_simd_time = (timestamp_us() - start) / 1000000.0;
+	printf("%-20s%.6f speedup: %.6f\n", "openmp simd:", openmp_simd_time, naive_time/openmp_simd_time);
+	openmp_simd_error = compare_matrix(openmp_simd_result, naive_result);
+	_mm_free(openmp_simd_result);
+
 	/* Error handling*/
 	if (openmp_error) {
 		printf("The result of openmp is wrong\n");
@@ -119,6 +128,9 @@ int main(int argc, char *argv[])
 	}
 	if (register_blocking_error) {
 		printf("The result of register blocking is wrong\n");
+	}
+	if (openmp_simd_error) {
+		printf("The result of openmp simd is wrong\n");
 	}
 
 	/* Clean up */
