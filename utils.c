@@ -5,7 +5,7 @@
  */
 int compare_matrix(double* sample, double* reference) {
 	for (int i = 0; i < HEIGHT*WIDTH; i++) {
-		if (sample[i] != reference[i]) {
+		if (abs(sample[i] - reference[i]) > 1e-15) {
 			return 1;
 		}
 	}

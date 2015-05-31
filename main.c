@@ -26,9 +26,9 @@ static inline uint64_t timestamp_us()
 
 int main(int argc, char *argv[])
 {
-	double* volatile matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* volatile matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
-	double* volatile reference = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* matrix1 = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* matrix2 = calloc(WIDTH*HEIGHT, sizeof(double));
+	double* reference = calloc(WIDTH*HEIGHT, sizeof(double));
 
 	/* Initialize matrix with random double-precision floating number in (0,1) range */
 	srand (time(NULL));
@@ -58,9 +58,9 @@ int main(int argc, char *argv[])
 	uint64_t start;
 	double naive_time, openmp_time, simd_time;
 	int naive_error, openmp_error, simd_error;
-	double* volatile naive_result;
-	double* volatile openmp_result;
-	double* volatile simd_result;
+	double* naive_result;
+	double* openmp_result;
+	double* simd_result;
 
 	/* Do calculations */
 	naive_result = calloc(WIDTH*HEIGHT, sizeof(double));

@@ -4,8 +4,8 @@
 #include <string.h>
 #include <immintrin.h>
 
-#define WIDTH 512
-#define HEIGHT 512
+#define WIDTH 1024
+#define HEIGHT 1024
 
 extern int compare_matrix(double* sample, double* reference);
 
