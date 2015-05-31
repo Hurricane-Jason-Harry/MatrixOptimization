@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 
 	/* Initialize matrix with random double-precision floating number in (0,1) range */
 	srand (time(NULL));
+	omp_set_num_threads(8);
 
 	for(int i = 0; i < WIDTH; i++)
 	{
