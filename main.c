@@ -42,12 +42,13 @@ int main(int argc, char *argv[])
 	}
 
 	uint64_t start;
-	double naive_time, openmp_time, simd_time, cache_blocking_time;
-	int openmp_error, simd_error, cache_blocking_error;
+	double naive_time, openmp_time, simd_time, cache_blocking_time, loop_unrolling_time;
+	int openmp_error, simd_error, cache_blocking_error, loop_unrolling_error;
 	double* naive_result;
 	double* openmp_result;
 	double* simd_result;
 	double* cache_blocking_result;
+	double* loop_unrolling_result;
 
 	/* Do calculations */
 	naive_result = malloc(WIDTH*HEIGHT*sizeof(double));
@@ -81,6 +82,14 @@ int main(int argc, char *argv[])
 	cache_blocking_error = compare_matrix(cache_blocking_result, naive_result);
 	free(cache_blocking_result);
 
+	loop_unrolling_result = malloc(WIDTH*HEIGHT*sizeof(double));
+	start = timestamp_us();
+	optimization_loop_unrolling(loop_unrolling_result, matrix1, matrix2);
+	loop_unrolling_time = (timestamp_us() - start) / 1000000.0;
+	printf("loop_unrolling: %.6f\n", loop_unrolling_time);
+	loop_unrolling_error = compare_matrix(loop_unrolling_result, naive_result);
+	free(loop_unrolling_result);
+
 	/* Error handling*/
 	if (openmp_error) {
 		printf("The result of openmp is wrong\n");
@@ -90,6 +99,9 @@ int main(int argc, char *argv[])
 	}
 	if (cache_blocking_error) {
 		printf("The result of cache blocking is wrong\n");
+	}
+	if (loop_unrolling_error) {
+		printf("The result of loop unrolling is wrong\n");
 	}
 
 	/* Clean up */
