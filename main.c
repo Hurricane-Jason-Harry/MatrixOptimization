@@ -28,7 +28,6 @@ int main(int argc, char *argv[])
 {
 	double* matrix1 = malloc(WIDTH*HEIGHT*sizeof(double));
 	double* matrix2 = malloc(WIDTH*HEIGHT*sizeof(double));
-	double* reference = malloc(WIDTH*HEIGHT*sizeof(double));
 
 	/* Initialize matrix with random double-precision floating number in (0,1) range */
 	srand (time(NULL));
@@ -42,24 +41,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/* Calculate the reference.*/
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int j = 0; j < HEIGHT; j++)
-		{
-			double temp = 0;
-			for (int k = 0; k < WIDTH; k++)
-			{
-				temp += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
-			}
-			reference[i*WIDTH+j] = temp;
-		}
-	}
-
-
 	uint64_t start;
 	double naive_time, openmp_time, simd_time, cache_blocking_time;
-	int naive_error, openmp_error, simd_error, cache_blocking_error;
+	int openmp_error, simd_error, cache_blocking_error;
 	double* naive_result;
 	double* openmp_result;
 	double* simd_result;
@@ -71,15 +55,14 @@ int main(int argc, char *argv[])
 	optimization_naive(naive_result, matrix1, matrix2);
 	naive_time = (timestamp_us() - start) / 1000000.0;
 	printf("naive:  %.6f\n", naive_time);
-	naive_error = compare_matrix(naive_result, reference);
-	free(naive_result);
+
 
 	openmp_result = malloc(WIDTH*HEIGHT*sizeof(double));
 	start = timestamp_us();
 	optimization_openmp(openmp_result, matrix1, matrix2);
 	openmp_time = (timestamp_us() - start) / 1000000.0;
 	printf("openmp: %.6f\n", openmp_time);
-	openmp_error = compare_matrix(openmp_result, reference);
+	openmp_error = compare_matrix(openmp_result, naive_result);
 	free(openmp_result);
 
 	simd_result = malloc(WIDTH*HEIGHT*sizeof(double));
@@ -87,7 +70,7 @@ int main(int argc, char *argv[])
 	optimization_simd(simd_result, matrix1, matrix2);
 	simd_time = (timestamp_us() - start) / 1000000.0;
 	printf("simd: %.6f\n", simd_time);
-	simd_error = compare_matrix(simd_result, reference);
+	simd_error = compare_matrix(simd_result, naive_result);
 	free(simd_result);
 
 	cache_blocking_result = malloc(WIDTH*HEIGHT*sizeof(double));
@@ -95,13 +78,10 @@ int main(int argc, char *argv[])
 	optimization_cache_blocking(cache_blocking_result, matrix1, matrix2);
 	cache_blocking_time = (timestamp_us() - start) / 1000000.0;
 	printf("cache blocking: %.6f\n", cache_blocking_time);
-	cache_blocking_error = compare_matrix(cache_blocking_result, reference);
+	cache_blocking_error = compare_matrix(cache_blocking_result, naive_result);
 	free(cache_blocking_result);
 
 	/* Error handling*/
-	if (naive_error) {
-		printf("The result of naive is wrong\n");
-	}
 	if (openmp_error) {
 		printf("The result of openmp is wrong\n");
 	}
@@ -115,6 +95,6 @@ int main(int argc, char *argv[])
 	/* Clean up */
 	free(matrix1);
 	free(matrix2);
-	free(reference);
+	free(naive_result);
 	return 0;
 }

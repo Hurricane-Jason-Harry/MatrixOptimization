@@ -1,7 +1,7 @@
 #include "header.h"
 
-#define WIDTH_BLOCK 128
-#define HEIGHT_BLOCK 128
+#define WIDTH_BLOCK 32
+#define HEIGHT_BLOCK 32
 
 void optimization_cache_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
