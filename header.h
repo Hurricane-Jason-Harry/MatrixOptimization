@@ -7,7 +7,7 @@
 #define WIDTH 1024
 #define HEIGHT 1024
 
-extern int compare_matrix(double* sample, double* reference);
+extern int compare_matrix(const double* sample, const double* reference);
 
 extern void optimization_naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
@@ -32,4 +32,8 @@ extern void optimization_openmp_simd(double* restrict result,
 
 extern void optimization_openmp_simd_cache_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
+
+extern void optimization_openmp_simd_cache_blocking_register_blocking(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2);
+
 #endif
