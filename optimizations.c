@@ -196,13 +196,12 @@ void optimization_openmp_simd_cache_blocking(double* restrict result,
 	{
 		#pragma omp for
 		for (int i = 0; i < WIDTH; i++) {
-			for (int h = 0; h < HEIGHT; h += HEIGHT_BLOCK) {
-				for (int w = 0; w < WIDTH; w += WIDTH_BLOCK)
+				for (int w = 0; w < WIDTH; w += BLOCK)
 				{
-					for (int j = h; j < h+ HEIGHT_BLOCK; j += 4)
+					for (int j = 0; j < HEIGHT; j += 4)
 					{
 						__m256d sum = _mm256_loadu_pd(result+i*WIDTH+j);
-						for (int k = w; k < w+WIDTH_BLOCK; k++)
+						for (int k = w; k < w+BLOCK; k++)
 						{
 							__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
 							__m256d m2 = _mm256_load_pd(matrix2+k*WIDTH+j);
@@ -212,7 +211,6 @@ void optimization_openmp_simd_cache_blocking(double* restrict result,
 					}
 				}
 			}
-		}
 	}
 }
 
@@ -227,10 +225,10 @@ void optimization_openmp_simd_cache_register_blocking(double* restrict result,
 	{
 		#pragma omp for
 		for (int i = 0; i < WIDTH; i++) {
-			for (int h = 0; h < HEIGHT/HEIGHT_BLOCK2*HEIGHT_BLOCK2; h += HEIGHT_BLOCK2) {
-				for (int w = 0; w < WIDTH; w += WIDTH_BLOCK)
-				{
-						double* dest = result+i*WIDTH+h;
+			for (int w = 0; w < WIDTH; w += BLOCK)
+			{
+				for (int j = 0; j < HEIGHT/HEIGHT_BLOCK2*HEIGHT_BLOCK2; j += HEIGHT_BLOCK2) {
+						double* dest = result+i*WIDTH+j;
 						__m256d sum0 = _mm256_load_pd(dest);
 						__m256d sum1 = _mm256_load_pd(dest+4);
 						__m256d sum2 = _mm256_load_pd(dest+8);
@@ -246,11 +244,11 @@ void optimization_openmp_simd_cache_register_blocking(double* restrict result,
 						__m256d sum12 = _mm256_load_pd(dest+48);
 						__m256d sum13 = _mm256_load_pd(dest+52);
 
-						for (int k = w; k < w+WIDTH_BLOCK; k++)
+						for (int k = w; k < w+BLOCK; k++)
 						{
 							__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
 							__m256d m2;
-							const double* src = matrix2+k*WIDTH+h;
+							const double* src = matrix2+k*WIDTH+j;
 
 							m2 = _mm256_load_pd(src);
 							sum0 = _mm256_fmadd_pd(m1, m2, sum0);
@@ -298,12 +296,10 @@ void optimization_openmp_simd_cache_register_blocking(double* restrict result,
 				}
 			}
 
-
-			for (int j = HEIGHT/HEIGHT_BLOCK2*HEIGHT_BLOCK2; j < HEIGHT; j+=4) {
-				for (int w = 0; w < WIDTH; w += WIDTH_BLOCK)
-				{
+			for (int w = 0; w < WIDTH; w += BLOCK) {
+				for (int j = HEIGHT/HEIGHT_BLOCK2*HEIGHT_BLOCK2; j < HEIGHT; j+=4) {
 					__m256d sum = _mm256_loadu_pd(result+i*WIDTH+j);
-					for (int k = w; k < w+WIDTH_BLOCK; k++)
+					for (int k = w; k < w+BLOCK; k++)
 					{
 						__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
 						__m256d m2 = _mm256_load_pd(matrix2+k*WIDTH+j);
