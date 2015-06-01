@@ -62,24 +62,22 @@ void optimization_simd(double* restrict result,
 
 #define WIDTH_BLOCK 32
 #define HEIGHT_BLOCK 32
+#define BLOCK 8
 
 void optimization_cache_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
-	for (int w = 0; w < WIDTH; w += WIDTH_BLOCK) {
-		for (int h = 0; h < HEIGHT; h += HEIGHT_BLOCK) {
-			for (int i = 0; i < WIDTH; i++)
-			{
-				for (int j = h; j < h + HEIGHT_BLOCK; j++)
+	for (int i = 0; i < WIDTH; i++)
+	{
+		for (int w = 0; w < WIDTH; w += BLOCK) {
+			for (int j = 0; j < HEIGHT; j++) {
+				double sum = result[i*WIDTH+j];
+				for (int k = w; k < w + BLOCK; k++)
 				{
-					double sum = result[i*WIDTH+j];
-					for (int k = w; k < w + WIDTH_BLOCK; k++)
-					{
-						sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
-					}
-					result[i*WIDTH+j] = sum;
+					sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
 				}
+				result[i*WIDTH+j] = sum;
 			}
 		}
 	}
