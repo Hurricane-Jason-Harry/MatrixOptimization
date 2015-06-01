@@ -26,6 +26,11 @@ static inline uint64_t timestamp_us()
 	return 1000000L * tv.tv_sec + tv.tv_usec;
 }
 
+
+void prefetch_matrices() {
+
+}
+
 int main(int argc, char *argv[])
 {
 	srand (time(NULL));
@@ -80,12 +85,21 @@ int main(int argc, char *argv[])
 		}
 
 		/* Do calculations */
+		for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+			_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+			_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+		}
+
 		naive_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 		start = timestamp_us();
 		optimization_naive(naive_result, matrix1, matrix2);
 		naive_time += (timestamp_us() - start) / 1000000.0;
 
 		if (openmp_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			openmp_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_openmp(openmp_result, matrix1, matrix2);
@@ -95,6 +109,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (simd_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			simd_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_simd(simd_result, matrix1, matrix2);
@@ -104,6 +122,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (cache_blocking_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			cache_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_cache_blocking(cache_blocking_result, matrix1, matrix2);
@@ -113,6 +135,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (loop_unrolling_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_loop_unrolling(loop_unrolling_result, matrix1, matrix2);
@@ -122,6 +148,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (register_blocking_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			register_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_register_blocking(register_blocking_result, matrix1, matrix2);
@@ -131,6 +161,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (openmp_simd_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			openmp_simd_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_openmp_simd(openmp_simd_result, matrix1, matrix2);
@@ -140,6 +174,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (openmp_simd_cache_blocking_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			openmp_simd_cache_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_openmp_simd_cache_blocking(openmp_simd_cache_blocking_result, matrix1, matrix2);
@@ -149,6 +187,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (openmp_simd_cache_blocking_loop_unrolling_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			openmp_simd_cache_blocking_loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_openmp_simd_cache_blocking_loop_unrolling(openmp_simd_cache_blocking_loop_unrolling_result, matrix1, matrix2);
@@ -159,6 +201,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (openmp_simd_cache_register_blocking_loop_unrolling_enabled) {
+			for (int i = 0; i < WIDTH*HEIGHT; i += 8) {
+				_mm_prefetch(matrix1 + i, _MM_HINT_T2);
+				_mm_prefetch(matrix2 + i, _MM_HINT_T2);
+			}
 			openmp_simd_cache_register_blocking_loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
 			optimization_openmp_simd_cache_register_blocking_loop_unrolling(openmp_simd_cache_register_blocking_loop_unrolling_result, matrix1, matrix2);
