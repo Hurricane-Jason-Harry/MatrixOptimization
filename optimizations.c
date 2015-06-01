@@ -220,7 +220,7 @@ void optimization_openmp_simd_cache_blocking(double* restrict result,
 
 #define HEIGHT_BLOCK2 56
 
-void optimization_openmp_simd_cache_blocking_register_blocking(double* restrict result,
+void optimization_openmp_simd_cache_register_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));

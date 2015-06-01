@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
 	double naive_time, openmp_time, simd_time, cache_blocking_time,
 		loop_unrolling_time, register_blocking_time, openmp_simd_time,
 		openmp_simd_cache_blocking_time,
-		openmp_simd_cache_blocking_register_blocking_time;
+		openmp_simd_cache_register_blocking_time;
 	int openmp_error, simd_error, cache_blocking_error, loop_unrolling_error,
 		register_blocking_error, openmp_simd_error,
 		openmp_simd_cache_blocking_error,
-		openmp_simd_cache_blocking_register_blocking_error;
+		openmp_simd_cache_register_blocking_error;
 	double* naive_result;
 	double* result;
 
@@ -61,14 +61,14 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_naive(naive_result, matrix1, matrix2);
 	naive_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f\n", "naive:", naive_time);
+	printf("%-40s%.6f\n", "naive:", naive_time);
 
 
 	result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 	start = timestamp_us();
 	optimization_openmp(result, matrix1, matrix2);
 	openmp_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "openmp:", openmp_time, naive_time/openmp_time);
+	printf("%-40s%.6f speedup: %.6f\n", "openmp:", openmp_time, naive_time/openmp_time);
 	openmp_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_simd(result, matrix1, matrix2);
 	simd_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "simd:", simd_time, naive_time/simd_time);
+	printf("%-40s%.6f speedup: %.6f\n", "simd:", simd_time, naive_time/simd_time);
 	simd_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_cache_blocking(result, matrix1, matrix2);
 	cache_blocking_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "cache blocking:", cache_blocking_time, naive_time/cache_blocking_time);
+	printf("%-40s%.6f speedup: %.6f\n", "cache blocking:", cache_blocking_time, naive_time/cache_blocking_time);
 	cache_blocking_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_loop_unrolling(result, matrix1, matrix2);
 	loop_unrolling_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "loop unrolling:", loop_unrolling_time, naive_time/loop_unrolling_time);
+	printf("%-40s%.6f speedup: %.6f\n", "loop unrolling:", loop_unrolling_time, naive_time/loop_unrolling_time);
 	loop_unrolling_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_register_blocking(result, matrix1, matrix2);
 	register_blocking_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "register blocking:", register_blocking_time, naive_time/register_blocking_time);
+	printf("%-40s%.6f speedup: %.6f\n", "register blocking:", register_blocking_time, naive_time/register_blocking_time);
 	register_blocking_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_openmp_simd(result, matrix1, matrix2);
 	openmp_simd_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "openmp simd:", openmp_simd_time, naive_time/openmp_simd_time);
+	printf("%-40s%.6f speedup: %.6f\n", "openmp simd:", openmp_simd_time, naive_time/openmp_simd_time);
 	openmp_simd_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
@@ -116,16 +116,16 @@ int main(int argc, char *argv[])
 	start = timestamp_us();
 	optimization_openmp_simd_cache_blocking(result, matrix1, matrix2);
 	openmp_simd_cache_blocking_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "openmp simd cache blocking:", openmp_simd_cache_blocking_time, naive_time/openmp_simd_cache_blocking_time);
+	printf("%-40s%.6f speedup: %.6f\n", "openmp simd cache blocking:", openmp_simd_cache_blocking_time, naive_time/openmp_simd_cache_blocking_time);
 	openmp_simd_cache_blocking_error = compare_matrix(result, naive_result);
 	_mm_free(result);
 
 	result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 	start = timestamp_us();
-	optimization_openmp_simd_cache_blocking_register_blocking(result, matrix1, matrix2);
-	openmp_simd_cache_blocking_register_blocking_time = (timestamp_us() - start) / 1000000.0;
-	printf("%-20s%.6f speedup: %.6f\n", "openmp simd cache blocking register blocking:", openmp_simd_cache_blocking_register_blocking_time, naive_time/openmp_simd_cache_blocking_register_blocking_time);
-	openmp_simd_cache_blocking_register_blocking_error = compare_matrix(result, naive_result);
+	optimization_openmp_simd_cache_register_blocking(result, matrix1, matrix2);
+	openmp_simd_cache_register_blocking_time = (timestamp_us() - start) / 1000000.0;
+	printf("%-40s%.6f speedup: %.6f\n", "openmp simd cache register blocking:", openmp_simd_cache_register_blocking_time, naive_time/openmp_simd_cache_register_blocking_time);
+	openmp_simd_cache_register_blocking_error = compare_matrix(result, naive_result);
 	//_mm_free(result);
 
 	/* Error handling*/
@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
 	if (openmp_simd_cache_blocking_error) {
 		printf("The result of openmp simd cache blocking is wrong\n");
 	}
-	if (openmp_simd_cache_blocking_register_blocking_error) {
-		printf("The result of openmp simd cache blocking register blocking is wrong\n");
+	if (openmp_simd_cache_register_blocking_error) {
+		printf("The result of openmp simd cache register blocking is wrong\n");
 	}
 
 	/* Clean up */
