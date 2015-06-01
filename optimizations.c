@@ -187,14 +187,14 @@ void optimization_openmp_simd(double* restrict result,
 void optimization_openmp_simd_cache_blocking(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	const int BLOCK = 8;
+	const int BLOCK = 11;
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
 	{
 		#pragma omp for
 		for (int i = 0; i < WIDTH; i++) {
-				for (int w = 0; w < WIDTH; w += BLOCK)
+				for (int w = 0; w < WIDTH/BLOCK*BLOCK; w += BLOCK)
 				{
 					for (int j = 0; j < HEIGHT; j += 4)
 					{
@@ -207,7 +207,17 @@ void optimization_openmp_simd_cache_blocking(double* restrict result,
 						}
 						_mm256_store_pd(result+i*WIDTH+j, sum);
 					}
-
+				}
+				for (int j = 0; j < HEIGHT; j += 4)
+				{
+					__m256d sum = _mm256_load_pd(result+i*WIDTH+j);
+					for (int k = WIDTH/BLOCK*BLOCK; k < WIDTH; k++)
+					{
+						__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
+						__m256d m2 = _mm256_load_pd(matrix2+k*WIDTH+j);
+						sum = _mm256_fmadd_pd(m1, m2, sum);
+					}
+					_mm256_store_pd(result+i*WIDTH+j, sum);
 				}
 			}
 	}
