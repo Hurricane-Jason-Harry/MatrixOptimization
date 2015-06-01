@@ -43,7 +43,15 @@ int main(int argc, char *argv[])
 		openmp_simd_cache_blocking_loop_unrolling_error = 0,
 		openmp_simd_cache_register_blocking_loop_unrolling_error = 0;
 	double* naive_result;
-	double* result;
+	double* openmp_result;
+	double* simd_result;
+	double* cache_blocking_result;
+	double* loop_unrolling_result;
+	double* register_blocking_result;
+	double* openmp_simd_result;
+	double* openmp_simd_cache_blocking_result;
+	double* openmp_simd_cache_blocking_loop_unrolling_result;
+	double* openmp_simd_cache_register_blocking_loop_unrolling_result;
 
 	int openmp_enabled = 1,
 		simd_enabled = 1,
@@ -78,99 +86,109 @@ int main(int argc, char *argv[])
 		naive_time += (timestamp_us() - start) / 1000000.0;
 
 		if (openmp_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			openmp_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp(result, matrix1, matrix2);
+			optimization_openmp(openmp_result, matrix1, matrix2);
 			openmp_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				openmp_error = compare_matrix(openmp_result, naive_result);
 		}
 
 		if (simd_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			simd_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_simd(result, matrix1, matrix2);
+			optimization_simd(simd_result, matrix1, matrix2);
 			simd_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				simd_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				simd_error = compare_matrix(simd_result, naive_result);
 		}
 
 		if (cache_blocking_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			cache_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_cache_blocking(result, matrix1, matrix2);
+			optimization_cache_blocking(cache_blocking_result, matrix1, matrix2);
 			cache_blocking_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				cache_blocking_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				cache_blocking_error = compare_matrix(cache_blocking_result, naive_result);
 		}
 
 		if (loop_unrolling_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_loop_unrolling(result, matrix1, matrix2);
+			optimization_loop_unrolling(loop_unrolling_result, matrix1, matrix2);
 			loop_unrolling_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				loop_unrolling_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				loop_unrolling_error = compare_matrix(loop_unrolling_result, naive_result);
 		}
 
 		if (register_blocking_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			register_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_register_blocking(result, matrix1, matrix2);
+			optimization_register_blocking(register_blocking_result, matrix1, matrix2);
 			register_blocking_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				register_blocking_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				register_blocking_error = compare_matrix(register_blocking_result, naive_result);
 		}
 
 		if (openmp_simd_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			openmp_simd_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp_simd(result, matrix1, matrix2);
+			optimization_openmp_simd(openmp_simd_result, matrix1, matrix2);
 			openmp_simd_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_simd_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				openmp_simd_error = compare_matrix(openmp_simd_result, naive_result);
 		}
 
 		if (openmp_simd_cache_blocking_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			openmp_simd_cache_blocking_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp_simd_cache_blocking(result, matrix1, matrix2);
+			optimization_openmp_simd_cache_blocking(openmp_simd_cache_blocking_result, matrix1, matrix2);
 			openmp_simd_cache_blocking_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_simd_cache_blocking_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				openmp_simd_cache_blocking_error = compare_matrix(openmp_simd_cache_blocking_result, naive_result);
 		}
 
 		if (openmp_simd_cache_blocking_loop_unrolling_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			openmp_simd_cache_blocking_loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp_simd_cache_blocking_loop_unrolling(result, matrix1, matrix2);
+			optimization_openmp_simd_cache_blocking_loop_unrolling(openmp_simd_cache_blocking_loop_unrolling_result, matrix1, matrix2);
 			openmp_simd_cache_blocking_loop_unrolling_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_simd_cache_blocking_loop_unrolling_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				openmp_simd_cache_blocking_loop_unrolling_error = compare_matrix(openmp_simd_cache_blocking_loop_unrolling_result, naive_result);
+
 		}
 
 		if (openmp_simd_cache_register_blocking_loop_unrolling_enabled) {
-			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+			openmp_simd_cache_register_blocking_loop_unrolling_result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp_simd_cache_register_blocking_loop_unrolling(result, matrix1, matrix2);
+			optimization_openmp_simd_cache_register_blocking_loop_unrolling(openmp_simd_cache_register_blocking_loop_unrolling_result, matrix1, matrix2);
 			openmp_simd_cache_register_blocking_loop_unrolling_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_simd_cache_register_blocking_loop_unrolling_error = compare_matrix(result, naive_result);
-			_mm_free(result);
+				openmp_simd_cache_register_blocking_loop_unrolling_error = compare_matrix(openmp_simd_cache_register_blocking_loop_unrolling_result, naive_result);
 		}
+
+		if (openmp_enabled)
+			_mm_free(openmp_result);
+		if (simd_enabled)
+			_mm_free(simd_result);
+		if (cache_blocking_enabled)
+			_mm_free(cache_blocking_result);
+		if (loop_unrolling_enabled)
+			_mm_free(loop_unrolling_result);
+		if (register_blocking_enabled)
+			_mm_free(register_blocking_result);
+		if (openmp_simd_enabled)
+			_mm_free(openmp_simd_result);
+		if (openmp_simd_cache_blocking_enabled)
+			_mm_free(openmp_simd_cache_blocking_result);
+		if (openmp_simd_cache_blocking_loop_unrolling_enabled)
+			_mm_free(openmp_simd_cache_blocking_loop_unrolling_result);
+		if (openmp_simd_cache_register_blocking_loop_unrolling_enabled)
+			_mm_free(openmp_simd_cache_register_blocking_loop_unrolling_result);
 
 		_mm_free(naive_result);
 		_mm_free(matrix1);
 		_mm_free(matrix2);
-
 	}
 
 	/* average the results */
