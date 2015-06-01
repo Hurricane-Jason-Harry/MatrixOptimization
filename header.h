@@ -36,7 +36,7 @@ extern void optimization_openmp_simd_cache_blocking(double* restrict result,
 extern void optimization_openmp_simd_cache_blocking_loop_unrolling(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp_simd_cache_register_blocking(double* restrict result,
+extern void optimization_openmp_simd_cache_register_blocking_loop_unrolling(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
 #endif

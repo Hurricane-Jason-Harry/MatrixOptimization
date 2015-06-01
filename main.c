@@ -36,12 +36,12 @@ int main(int argc, char *argv[])
 		loop_unrolling_time = 0 , register_blocking_time = 0, openmp_simd_time = 0,
 		openmp_simd_cache_blocking_time = 0,
 		openmp_simd_cache_blocking_loop_unrolling_time = 0,
-		openmp_simd_cache_register_blocking_time = 0;
+		openmp_simd_cache_register_blocking_loop_unrolling_time = 0;
 	int openmp_error = 0, simd_error = 0, cache_blocking_error = 0, loop_unrolling_error = 0,
 		register_blocking_error = 0, openmp_simd_error = 0,
 		openmp_simd_cache_blocking_error = 0,
 		openmp_simd_cache_blocking_loop_unrolling_error = 0,
-		openmp_simd_cache_register_blocking_error = 0;
+		openmp_simd_cache_register_blocking_loop_unrolling_error = 0;
 	double* naive_result;
 	double* result;
 
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 		openmp_simd_enabled = 1,
 		openmp_simd_cache_blocking_enabled = 1,
 		openmp_simd_cache_blocking_loop_unrolling_enabled = 1,
-		openmp_simd_cache_register_blocking_enabled = 1;
+		openmp_simd_cache_register_blocking_loop_unrolling_enabled = 1;
 
 	const int NUM_OF_EXPERIMENTS = 5;
 	for (int i = 0; i < NUM_OF_EXPERIMENTS; i++) {
@@ -157,13 +157,13 @@ int main(int argc, char *argv[])
 			_mm_free(result);
 		}
 
-		if (openmp_simd_cache_register_blocking_enabled) {
+		if (openmp_simd_cache_register_blocking_loop_unrolling_enabled) {
 			result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 			start = timestamp_us();
-			optimization_openmp_simd_cache_register_blocking(result, matrix1, matrix2);
-			openmp_simd_cache_register_blocking_time += (timestamp_us() - start) / 1000000.0;
+			optimization_openmp_simd_cache_register_blocking_loop_unrolling(result, matrix1, matrix2);
+			openmp_simd_cache_register_blocking_loop_unrolling_time += (timestamp_us() - start) / 1000000.0;
 			if (i == 0)
-				openmp_simd_cache_register_blocking_error = compare_matrix(result, naive_result);
+				openmp_simd_cache_register_blocking_loop_unrolling_error = compare_matrix(result, naive_result);
 			_mm_free(result);
 		}
 
@@ -183,28 +183,28 @@ int main(int argc, char *argv[])
 	openmp_simd_time /= NUM_OF_EXPERIMENTS;
 	openmp_simd_cache_blocking_time /= NUM_OF_EXPERIMENTS;
 	openmp_simd_cache_blocking_loop_unrolling_time /= NUM_OF_EXPERIMENTS;
-	openmp_simd_cache_register_blocking_time /= NUM_OF_EXPERIMENTS;
+	openmp_simd_cache_register_blocking_loop_unrolling_time /= NUM_OF_EXPERIMENTS;
 
 	/* output benchmark result */
-	printf("%-45s%.6f\n", "naive:", naive_time);
+	printf("%-60s%.6f\n", "naive:", naive_time);
 	if (openmp_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "openmp:", openmp_time, naive_time/openmp_time);
+		printf("%-60s%.6f speedup: %.6f\n", "openmp:", openmp_time, naive_time/openmp_time);
 	if (simd_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "simd:", simd_time, naive_time/simd_time);
+		printf("%-60s%.6f speedup: %.6f\n", "simd:", simd_time, naive_time/simd_time);
 	if (cache_blocking_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "cache blocking:", cache_blocking_time, naive_time/cache_blocking_time);
+		printf("%-60s%.6f speedup: %.6f\n", "cache blocking:", cache_blocking_time, naive_time/cache_blocking_time);
 	if (loop_unrolling_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "loop unrolling:", loop_unrolling_time, naive_time/loop_unrolling_time);
+		printf("%-60s%.6f speedup: %.6f\n", "loop unrolling:", loop_unrolling_time, naive_time/loop_unrolling_time);
 	if (register_blocking_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "register blocking:", register_blocking_time, naive_time/register_blocking_time);
+		printf("%-60s%.6f speedup: %.6f\n", "register blocking:", register_blocking_time, naive_time/register_blocking_time);
 	if (openmp_simd_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "openmp simd:", openmp_simd_time, naive_time/openmp_simd_time);
+		printf("%-60s%.6f speedup: %.6f\n", "openmp+simd:", openmp_simd_time, naive_time/openmp_simd_time);
 	if (openmp_simd_cache_blocking_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "openmp simd cache blocking:", openmp_simd_cache_blocking_time, naive_time/openmp_simd_cache_blocking_time);
+		printf("%-60s%.6f speedup: %.6f\n", "openmp+simd+cache blocking:", openmp_simd_cache_blocking_time, naive_time/openmp_simd_cache_blocking_time);
 	if (openmp_simd_cache_blocking_loop_unrolling_enabled)
-			printf("%-45s%.6f speedup: %.6f\n", "openmp simd cache blocking loop unrolling:", openmp_simd_cache_blocking_loop_unrolling_time, naive_time/openmp_simd_cache_blocking_loop_unrolling_time);
-	if (openmp_simd_cache_register_blocking_enabled)
-		printf("%-45s%.6f speedup: %.6f\n", "openmp simd cache register blocking:", openmp_simd_cache_register_blocking_time, naive_time/openmp_simd_cache_register_blocking_time);
+			printf("%-60s%.6f speedup: %.6f\n", "openmp+simd+cache blocking+loop unrolling:", openmp_simd_cache_blocking_loop_unrolling_time, naive_time/openmp_simd_cache_blocking_loop_unrolling_time);
+	if (openmp_simd_cache_register_blocking_loop_unrolling_enabled)
+		printf("%-60s%.6f speedup: %.6f\n", "openmp+simd+cache blocking+loop unrolling+register blocking:", openmp_simd_cache_register_blocking_loop_unrolling_time, naive_time/openmp_simd_cache_register_blocking_loop_unrolling_time);
 
 	/* Error handling*/
 	if (openmp_error) {
@@ -226,13 +226,13 @@ int main(int argc, char *argv[])
 		printf("The result of openmp simd is wrong\n");
 	}
 	if (openmp_simd_cache_blocking_error) {
-		printf("The result of openmp simd cache blocking is wrong\n");
+		printf("The result of openmp+simd+cache blocking is wrong\n");
 	}
 	if (openmp_simd_cache_blocking_loop_unrolling_error) {
-		printf("The result of openmp simd cache blocking loop unrolling is wrong\n");
+		printf("The result of openmp+simd+cache blocking+loop unrolling is wrong\n");
 	}
-	if (openmp_simd_cache_register_blocking_error) {
-		printf("The result of openmp simd cache register blocking is wrong\n");
+	if (openmp_simd_cache_register_blocking_loop_unrolling_error) {
+		printf("The result of openmp+simd+cache blocking+loop unrolling+register blocking is wrong\n");
 	}
 
 	return 0;
