@@ -1,8 +1,11 @@
-#ifndef MATRIX_OPTIMIZATION_HEADER
-#define MATRIX_OPTIMIZATION_HEADER
+#ifndef MATRIX_HEADER
+#define MATRIX_HEADER
 
 #include <string.h>
 #include <immintrin.h>
+
+#define ENABLE 1
+#define DISABLE 0
 
 #define WIDTH 1024
 #define HEIGHT 1024
@@ -15,36 +18,37 @@
 
 #define NUM_OF_OPTIMIZATIONS 10
 
+
 extern int compare_matrix(const double* sample, const double* reference);
 
-extern void optimization_naive(double* restrict result,
+extern void naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp(double* restrict result,
+extern void openmp(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_simd(double* restrict result,
+extern void simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_cache_block(double* restrict result,
+extern void cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_loop_unroll(double* restrict result,
+extern void loopUnroll(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_register_block(double* restrict result,
+extern void registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp_simd(double* restrict result,
+extern void openmp_simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp_simd_cache_block(double* restrict result,
+extern void openmp_simd_cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp_simd_cache_block_loop_unroll(double* restrict result,
+extern void openmp_simd_cacheBlock_loopUnroll(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
-extern void optimization_openmp_simd_cache_register_block_loop_unroll(double* restrict result,
+extern void openmp_simd_cacheBlock_loopUnroll_registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
 
 #endif

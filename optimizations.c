@@ -1,6 +1,6 @@
 #include "header.h"
 
-void optimization_naive(double* restrict result,
+void naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
@@ -17,7 +17,7 @@ void optimization_naive(double* restrict result,
 }
 
 
-void optimization_openmp(double* restrict result,
+void openmp(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	#pragma omp parallel for
@@ -36,7 +36,7 @@ void optimization_openmp(double* restrict result,
 
 
 
-void optimization_simd(double* restrict result,
+void simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
@@ -54,7 +54,7 @@ void optimization_simd(double* restrict result,
 	}
 }
 
-void optimization_cache_block(double* restrict result,
+void cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	/*
 	const int BLOCK = 8;
@@ -132,7 +132,7 @@ void optimization_cache_block(double* restrict result,
 }
 
 
-void optimization_loop_unroll(double* restrict result,
+void loopUnroll(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
@@ -179,7 +179,7 @@ void optimization_loop_unroll(double* restrict result,
 	}
 }
 
-void optimization_register_block(double* restrict result,
+void registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	for (int i = 0; i < WIDTH; i++)
@@ -239,7 +239,7 @@ void optimization_register_block(double* restrict result,
 	}
 }
 
-void optimization_openmp_simd(double* restrict result,
+void openmp_simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	#pragma omp parallel
@@ -262,7 +262,7 @@ void optimization_openmp_simd(double* restrict result,
 	}
 }
 
-void optimization_openmp_simd_cache_block(double* restrict result,
+void openmp_simd_cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	const int BLOCK = 8;
@@ -290,7 +290,7 @@ void optimization_openmp_simd_cache_block(double* restrict result,
 	}
 }
 
-void optimization_openmp_simd_cache_block_loop_unroll(double* restrict result,
+void openmp_simd_cacheBlock_loopUnroll(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	const int BLOCK = 8;
@@ -340,7 +340,7 @@ void optimization_openmp_simd_cache_block_loop_unroll(double* restrict result,
 	}
 }
 
-void optimization_openmp_simd_cache_register_block_loop_unroll(double* restrict result,
+void openmp_simd_cacheBlock_loopUnroll_registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
