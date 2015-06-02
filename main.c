@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 		openmp_simd_cache_blocking_loop_unrolling_enabled = 1,
 		openmp_simd_cache_register_blocking_loop_unrolling_enabled = 1;
 
-	const int NUM_OF_EXPERIMENTS = 5;
+	const int NUM_OF_EXPERIMENTS = 20;
 	for (int i = 0; i < NUM_OF_EXPERIMENTS; i++) {
 
 		double* matrix1 = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
