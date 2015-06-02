@@ -73,7 +73,7 @@ void cacheBlock(double* restrict result,
 		}
 	}*/
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
-	const int BLOCK1 = 127;
+	const int BLOCK1 = 31;
 	//const int BLOCK2 = 128;
 	for (int kk = 0; kk < WIDTH/BLOCK1*BLOCK1; kk+=BLOCK1) {
 		//for (int jj = 0; jj < HEIGHT/BLOCK2*BLOCK2; jj += BLOCK2) {
