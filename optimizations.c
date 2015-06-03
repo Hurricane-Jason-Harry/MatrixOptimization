@@ -274,78 +274,120 @@ void openmp_simd_cacheBlock_loopUnroll(double* restrict result,
 void openmp_simd_cacheBlock_loopUnroll_registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
-
 	const int BLOCK = 512;
+	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
 	{
 		for (int kk = 0; kk < WIDTH; kk += BLOCK) {
 			#pragma omp for
-			for (int i = 0; i < WIDTH; i++) {
-				for (int k = kk; k < kk+BLOCK; k += 8)
+			for (int i = 0; i < WIDTH; i++)
+			{
+				const double* mat1 = matrix1+i*WIDTH;
+				double* dest = result+i*WIDTH;
+				for (int k = kk; k < kk+BLOCK; k+=8)
 				{
-					const double* mat1 = matrix1+i*WIDTH+k;
-					__m256d m1_0 = _mm256_broadcast_sd(mat1);
-					__m256d m1_1 = _mm256_broadcast_sd(mat1+1);
-					__m256d m1_2 = _mm256_broadcast_sd(mat1+2);
-					__m256d m1_3 = _mm256_broadcast_sd(mat1+3);
-					__m256d m1_4 = _mm256_broadcast_sd(mat1+4);
-					__m256d m1_5 = _mm256_broadcast_sd(mat1+5);
-					__m256d m1_6 = _mm256_broadcast_sd(mat1+6);
-					__m256d m1_7 = _mm256_broadcast_sd(mat1+7);
+					const double* mat2 = matrix2+k*WIDTH;
+					__m256d temp0 = _mm256_broadcast_sd(mat1+k);
+					__m256d temp1 = _mm256_broadcast_sd(mat1+k+1);
+					__m256d temp2 = _mm256_broadcast_sd(mat1+k+2);
+					__m256d temp3 = _mm256_broadcast_sd(mat1+k+3);
+					__m256d temp4 = _mm256_broadcast_sd(mat1+k+4);
+					__m256d temp5 = _mm256_broadcast_sd(mat1+k+5);
+					__m256d temp6 = _mm256_broadcast_sd(mat1+k+6);
+					__m256d temp7 = _mm256_broadcast_sd(mat1+k+7);
 
-					for (int j = 0; j < HEIGHT; j += 8) {
+					for (int j = 0; j < HEIGHT; j+= 32)
+					{
+						__m256d sum0 = _mm256_load_pd(dest+j);
+						__m256d sum1 = _mm256_load_pd(dest+j+4);
+						__m256d sum2 = _mm256_load_pd(dest+j+8);
+						__m256d sum3 = _mm256_load_pd(dest+j+12);
+						__m256d sum4 = _mm256_load_pd(dest+j+16);
+						__m256d sum5 = _mm256_load_pd(dest+j+20);
+						__m256d sum6 = _mm256_load_pd(dest+j+24);
+						__m256d sum7 = _mm256_load_pd(dest+j+28);
 
-							double* dest = result+i*WIDTH+j;
-							__m256d sum0 = _mm256_load_pd(dest);
-							__m256d sum1 = _mm256_load_pd(dest+4);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j), temp0, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4), temp0, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8), temp0, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12), temp0, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16), temp0, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20), temp0, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24), temp0, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28), temp0, sum7);
 
-							const double* mat2 = matrix2+k*WIDTH+j;
-							__m256d m2_0, m2_1;
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH), temp1, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH), temp1, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH), temp1, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH), temp1, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH), temp1, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH), temp1, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH), temp1, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH), temp1, sum7);
 
-							m2_0 = _mm256_load_pd(mat2);
-							m2_1 = _mm256_load_pd(mat2+4);
-							sum0 = _mm256_fmadd_pd(m1_0, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_0, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*2), temp2, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*2), temp2, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*2), temp2, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*2), temp2, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*2), temp2, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*2), temp2, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*2), temp2, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*2), temp2, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH);
-							sum0 = _mm256_fmadd_pd(m1_1, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_1, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*3), temp3, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*3), temp3, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*3), temp3, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*3), temp3, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*3), temp3, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*3), temp3, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*3), temp3, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*3), temp3, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH*2);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*2);
-							sum0 = _mm256_fmadd_pd(m1_2, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_2, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*4), temp4, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*4), temp4, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*4), temp4, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*4), temp4, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*4), temp4, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*4), temp4, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*4), temp4, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*4), temp4, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH*3);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*3);
-							sum0 = _mm256_fmadd_pd(m1_3, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_3, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*5), temp5, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*5), temp5, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*5), temp5, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*5), temp5, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*5), temp5, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*5), temp5, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*5), temp5, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*5), temp5, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH*4);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*4);
-							sum0 = _mm256_fmadd_pd(m1_4, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_4, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*6), temp6, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*6), temp6, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*6), temp6, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*6), temp6, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*6), temp6, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*6), temp6, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*6), temp6, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*6), temp6, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH*5);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*5);
-							sum0 = _mm256_fmadd_pd(m1_5, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_5, m2_1, sum1);
+						sum0 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+WIDTH*7), temp7, sum0);
+						sum1 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+4+WIDTH*7), temp7, sum1);
+						sum2 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+8+WIDTH*7), temp7, sum2);
+						sum3 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+12+WIDTH*7), temp7, sum3);
+						sum4 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+16+WIDTH*7), temp7, sum4);
+						sum5 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+20+WIDTH*7), temp7, sum5);
+						sum6 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+24+WIDTH*7), temp7, sum6);
+						sum7 = _mm256_fmadd_pd(_mm256_load_pd(mat2+j+28+WIDTH*7), temp7, sum7);
 
-							m2_0 = _mm256_load_pd(mat2+WIDTH*6);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*6);
-							sum0 = _mm256_fmadd_pd(m1_6, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_6, m2_1, sum1);
-
-							m2_0 = _mm256_load_pd(mat2+WIDTH*7);
-							m2_1 = _mm256_load_pd(mat2+4+WIDTH*7);
-							sum0 = _mm256_fmadd_pd(m1_7, m2_0, sum0);
-							sum1 = _mm256_fmadd_pd(m1_7, m2_1, sum1);
-
-							_mm256_store_pd(dest, sum0);
-							_mm256_store_pd(dest+4, sum1);
+						_mm256_store_pd(dest+j, sum0);
+						_mm256_store_pd(dest+j+4, sum1);
+						_mm256_store_pd(dest+j+8, sum2);
+						_mm256_store_pd(dest+j+12, sum3);
+						_mm256_store_pd(dest+j+16, sum4);
+						_mm256_store_pd(dest+j+20, sum5);
+						_mm256_store_pd(dest+j+24, sum6);
+						_mm256_store_pd(dest+j+28, sum7);
 					}
 				}
 			}
