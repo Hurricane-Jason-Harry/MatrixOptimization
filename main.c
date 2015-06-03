@@ -81,24 +81,23 @@ int main(int argc, char *argv[])
 
 		for (int j = 0; j < NUM_OF_OPTIMIZATIONS; j++) {
 			if (enables[j]) {
-				if (i == 0) {
-					matrix1s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-					matrix2s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-					results[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-					references[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-					naive(references[j], matrix1s[j], matrix2s[j]);
-				}
+				matrix1s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+				matrix2s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+				for (int i = 0; i < WIDTH*HEIGHT; i += 8)
+					_mm_prefetch(matrix2s[j]+i, _MM_HINT_NTA);
+				results[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+				references[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 				uint64_t start = timestamp_us();
 				functions[j](results[j], matrix1s[j], matrix2s[j]);
 				times[j] += (timestamp_us() - start) / 1000000.0 / NUM_OF_EXPERIMENTS;
-				if (i == 0)
+				if (i == 0) {
+					naive(references[j], matrix1s[j], matrix2s[j]);
 					errors[j] = compare_matrix(results[j], references[j]);
-				if (i == NUM_OF_EXPERIMENTS - 1) {
-					_mm_free(matrix1s[j]);
-					_mm_free(matrix2s[j]);
-					_mm_free(results[j]);
-					_mm_free(references[j]);
 				}
+				_mm_free(matrix1s[j]);
+				_mm_free(matrix2s[j]);
+				_mm_free(results[j]);
+				_mm_free(references[j]);
 			}
 		}
 	}

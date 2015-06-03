@@ -56,54 +56,21 @@ void simd(double* restrict result,
 
 void cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
-	/*
-	const int BLOCK = 8;
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int w = 0; w < WIDTH/BLOCK*BLOCK; w += BLOCK) {
-			for (int j = 0; j < HEIGHT; j++) {
-				double sum = result[i*WIDTH+j];
-				for (int k = w; k < w + BLOCK; k++)
-				{
-					sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
-				}
-				result[i*WIDTH+j] = sum;
-			}
-		}
-	}*/
-	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
-	const int BLOCK1 = 31;
-	//const int BLOCK2 = 128;
+	const int BLOCK1 = 512;
 	for (int kk = 0; kk < WIDTH/BLOCK1*BLOCK1; kk+=BLOCK1) {
-		//for (int jj = 0; jj < HEIGHT/BLOCK2*BLOCK2; jj += BLOCK2) {
-			for (int i = 0; i < WIDTH; i++)
-			{
-				for (int k = kk; k < kk+BLOCK1; k++)
-				{
-					double temp = matrix1[i*WIDTH+k];
-					for (int j = 0; j < HEIGHT;j++) {
-						result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
-					}
-				}
-			}
-		//}
-	}
-
-	/*
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = 0; k < WIDTH/BLOCK1*BLOCK1; k++)
+		for (int i = 0; i < WIDTH; i++)
 		{
-			double temp = matrix1[i*WIDTH+k];
-			for (int j = HEIGHT/BLOCK2*BLOCK2; j < HEIGHT; j++)
+			for (int k = kk; k < kk+BLOCK1; k++)
 			{
-				result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
+				double temp = matrix1[i*WIDTH+k];
+				for (int j = 0; j < HEIGHT;j++) {
+					result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
+				}
 			}
 		}
 	}
-	*/
-
+	/*
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int k = WIDTH/BLOCK1*BLOCK1; k < WIDTH; k++)
@@ -114,21 +81,7 @@ void cacheBlock(double* restrict result,
 				result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
 			}
 		}
-	}
-
-	/*
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = WIDTH/BLOCK1*BLOCK1; k < WIDTH; k++)
-		{
-			double temp = matrix1[i*WIDTH+k];
-			for (int j = HEIGHT/BLOCK2*BLOCK2; j < HEIGHT; j++)
-			{
-				result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
-			}
-		}
-	}
-	*/
+	}*/
 }
 
 
@@ -182,9 +135,10 @@ void loopUnroll(double* restrict result,
 void registerBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int j = 0; j < HEIGHT/10*10; j += 10)
+	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
+	const int BLOCK = 8;
+	for (int jj = 0; jj < HEIGHT/BLOCK*BLOCK; jj += BLOCK) {
+		for (int i = 0; i < WIDTH; i++)
 		{
 			double sum0 = 0;
 			double sum1 = 0;
@@ -194,25 +148,21 @@ void registerBlock(double* restrict result,
 			double sum5 = 0;
 			double sum6 = 0;
 			double sum7 = 0;
-			double sum8 = 0;
-			double sum9 = 0;
 			for (int k = 0; k < WIDTH; k++)
 			{
-				double m = matrix1[i*WIDTH+k];
-				int kwj = k*WIDTH+j;
-				sum0 += m*matrix2[kwj];
-				sum1 += m*matrix2[kwj+1];
-				sum2 += m*matrix2[kwj+2];
-				sum3 += m*matrix2[kwj+3];
-				sum4 += m*matrix2[kwj+4];
-				sum5 += m*matrix2[kwj+5];
-				sum6 += m*matrix2[kwj+6];
-				sum7 += m*matrix2[kwj+7];
-				sum8 += m*matrix2[kwj+8];
-				sum9 += m*matrix2[kwj+9];
+				double temp = matrix1[i*WIDTH+k];
+				int kwj = k*WIDTH+jj;
+				sum0 += temp*matrix2[kwj];
+				sum1 += temp*matrix2[kwj+1];
+				sum2 += temp*matrix2[kwj+2];
+				sum3 += temp*matrix2[kwj+3];
+				sum4 += temp*matrix2[kwj+4];
+				sum5 += temp*matrix2[kwj+5];
+				sum6 += temp*matrix2[kwj+6];
+				sum7 += temp*matrix2[kwj+7];
 			}
-			int iwj = i*WIDTH+j;
-			result[iwj]   = sum0;
+			int iwj = i*WIDTH+jj;
+			result[iwj] = sum0;
 			result[iwj+1] = sum1;
 			result[iwj+2] = sum2;
 			result[iwj+3] = sum3;
@@ -220,21 +170,6 @@ void registerBlock(double* restrict result,
 			result[iwj+5] = sum5;
 			result[iwj+6] = sum6;
 			result[iwj+7] = sum7;
-			result[iwj+8] = sum8;
-			result[iwj+9] = sum9;
-		}
-	}
-
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int j = HEIGHT/10*10; j < HEIGHT; j++)
-		{
-			double sum = 0;
-			for (int k = 0; k < WIDTH; k++)
-			{
-				sum += matrix1[i*WIDTH+k]*matrix2[k*WIDTH+j];
-			}
-			result[i*WIDTH+j] = sum;
 		}
 	}
 }
@@ -242,21 +177,19 @@ void registerBlock(double* restrict result,
 void openmp_simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	#pragma omp parallel
+	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
+
+	#pragma omp parallel for
+	for (int i = 0; i < WIDTH; i++)
 	{
-		#pragma omp for
-		for (int i = 0; i < WIDTH; i++)
+		for (int k = 0; k < WIDTH; k++)
 		{
-			for (int j = 0; j < HEIGHT; j+= 4)
+			__m256d temp = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
+			for (int j = 0; j < HEIGHT; j+=4)
 			{
-				__m256d sum = _mm256_setzero_pd();
-				for (int k = 0; k < WIDTH; k ++)
-				{
-					__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
-					__m256d m2 = _mm256_load_pd(matrix2+k*WIDTH+j);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-				}
-				_mm256_storeu_pd(result+i*WIDTH+j, sum);
+				__m256d r = _mm256_load_pd(result+i*WIDTH+j);
+				r = _mm256_fmadd_pd(_mm256_load_pd(matrix2+k*WIDTH+j), temp, r);
+				_mm256_store_pd(result+i*WIDTH+j, r);
 			}
 		}
 	}
@@ -265,25 +198,24 @@ void openmp_simd(double* restrict result,
 void openmp_simd_cacheBlock(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	const int BLOCK = 8;
+	const int BLOCK = 512;
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
 	{
-		#pragma omp for
-		for (int i = 0; i < WIDTH; i++) {
-			for (int w = 0; w < WIDTH/BLOCK*BLOCK; w += BLOCK)
+		for (int kk = 0; kk < WIDTH; kk += BLOCK) {
+			#pragma omp for
+			for (int i = 0; i < WIDTH; i++)
 			{
-				for (int j = 0; j < HEIGHT; j += 4)
+				for (int k = kk; k < kk+BLOCK; k++)
 				{
-					__m256d sum = _mm256_load_pd(result+i*WIDTH+j);
-					for (int k = w; k < w+BLOCK; k++)
+					__m256d temp = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
+					for (int j = 0; j < HEIGHT; j+=4)
 					{
-						__m256d m1 = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
-						__m256d m2 = _mm256_load_pd(matrix2+k*WIDTH+j);
-						sum = _mm256_fmadd_pd(m1, m2, sum);
+						__m256d r = _mm256_load_pd(result+i*WIDTH+j);
+						r = _mm256_fmadd_pd(_mm256_load_pd(matrix2+k*WIDTH+j), temp, r);
+						_mm256_store_pd(result+i*WIDTH+j, r);
 					}
-					_mm256_store_pd(result+i*WIDTH+j, sum);
 				}
 			}
 		}
