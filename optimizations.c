@@ -70,18 +70,6 @@ void cacheBlock(double* restrict result,
 			}
 		}
 	}
-	/*
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = WIDTH/BLOCK1*BLOCK1; k < WIDTH; k++)
-		{
-			double temp = matrix1[i*WIDTH+k];
-			for (int j = 0; j < HEIGHT; j++)
-			{
-				result[i*WIDTH+j] += temp*matrix2[k*WIDTH+j];
-			}
-		}
-	}*/
 }
 
 
@@ -187,7 +175,8 @@ void openmp_simd(double* restrict result,
 			__m256d temp = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
 			for (int j = 0; j < HEIGHT; j+=4)
 			{
-				__m256d r = _mm256_load_pd(result+i*WIDTH+j);
+				__m256d r;
+				r = _mm256_load_pd(result+i*WIDTH+j);
 				r = _mm256_fmadd_pd(_mm256_load_pd(matrix2+k*WIDTH+j), temp, r);
 				_mm256_store_pd(result+i*WIDTH+j, r);
 			}
@@ -225,47 +214,48 @@ void openmp_simd_cacheBlock(double* restrict result,
 void openmp_simd_cacheBlock_loopUnroll(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 
-	const int BLOCK = 8;
+	const int BLOCK = 512;
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
 	{
-		#pragma omp for
-		for (int i = 0; i < WIDTH; i++) {
-			for (int w = 0; w < WIDTH/BLOCK*BLOCK; w += BLOCK)
+		for (int kk = 0; kk < WIDTH; kk += BLOCK) {
+			#pragma omp for
+			for (int i = 0; i < WIDTH; i++)
 			{
-				for (int j = 0; j < HEIGHT; j += 4)
+				for (int k = kk; k < kk+BLOCK; k++)
 				{
-					__m256d sum = _mm256_load_pd(result+i*WIDTH+j);
-					const double* mat1 = matrix1+i*WIDTH+w;
-					const double* mat2 = matrix2+w*WIDTH+j;
-					__m256d m1;
-					__m256d m2;
-					m1 = _mm256_broadcast_sd(mat1);
-					m2 = _mm256_load_pd(mat2);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+1);
-					m2 = _mm256_load_pd(mat2+WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+2);
-					m2 = _mm256_load_pd(mat2+2*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+3);
-					m2 = _mm256_load_pd(mat2+3*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+4);
-					m2 = _mm256_load_pd(mat2+4*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+5);
-					m2 = _mm256_load_pd(mat2+5*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+6);
-					m2 = _mm256_load_pd(mat2+6*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					m1 = _mm256_broadcast_sd(mat1+7);
-					m2 = _mm256_load_pd(mat2+7*WIDTH);
-					sum = _mm256_fmadd_pd(m1, m2, sum);
-					_mm256_store_pd(result+i*WIDTH+j, sum);
+					__m256d temp = _mm256_broadcast_sd(matrix1+i*WIDTH+k);
+					for (int j = 0; j < HEIGHT; j+=32)
+					{
+						double* dest = result+i*WIDTH+j;
+						const double* mat2 = matrix2+k*WIDTH+j;
+						__m256d r;
+						r = _mm256_load_pd(dest);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2), temp, r);
+						_mm256_store_pd(dest, r);
+						r = _mm256_load_pd(dest+4);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+4), temp, r);
+						_mm256_store_pd(dest, r+4);
+						r = _mm256_load_pd(dest+8);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+8), temp, r);
+						_mm256_store_pd(dest, r+8);
+						r = _mm256_load_pd(dest+12);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+12), temp, r);
+						_mm256_store_pd(dest, r+12);
+						r = _mm256_load_pd(dest+16);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+16), temp, r);
+						_mm256_store_pd(dest, r+16);
+						r = _mm256_load_pd(dest+20);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+20), temp, r);
+						_mm256_store_pd(dest, r+20);
+						r = _mm256_load_pd(dest+24);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+24), temp, r);
+						_mm256_store_pd(dest, r+24);
+						r = _mm256_load_pd(dest+28);
+						r = _mm256_fmadd_pd(_mm256_load_pd(mat2+28), temp, r);
+						_mm256_store_pd(dest, r+28);
+					}
 				}
 			}
 		}
