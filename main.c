@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	double* results[NUM_OF_OPTIMIZATIONS] = {}; /* Store the outputs of optimizations */
 	double* references[NUM_OF_OPTIMIZATIONS] = {};
 	double  times[NUM_OF_OPTIMIZATIONS] = {}; /* Store the time measurement of optimizations */
-	double  errors[NUM_OF_OPTIMIZATIONS] = {}; /* Store whether the optimization has the correct result */
+	int  errors[NUM_OF_OPTIMIZATIONS] = {}; /* Store whether the optimization has the correct result */
 
 	void (*functions[NUM_OF_OPTIMIZATIONS])(double*, const double*, const double*) ={ /* The optimization functions */
 		 naive,
@@ -83,8 +83,10 @@ int main(int argc, char *argv[])
 			if (enables[j]) {
 				matrix1s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 				matrix2s[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-				for (int i = 0; i < WIDTH*HEIGHT; i += 8)
-					_mm_prefetch(matrix2s[j]+i, _MM_HINT_NTA);
+				for (int k = 0; k < WIDTH*HEIGHT; k++) {
+					matrix1s[j][k] = rand()/((double)RAND_MAX);
+					matrix2s[j][k] = rand()/((double)RAND_MAX);
+				}
 				results[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 				references[j] = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 				uint64_t start = timestamp_us();
