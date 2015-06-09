@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 		 ENABLE};
 
 	/* Do multiple experiments. Measure the average runtime. */
-	const int NUM_OF_EXPERIMENTS = 5;
+	const int NUM_OF_EXPERIMENTS = 1;
 
 	for (int i = 0; i < NUM_OF_EXPERIMENTS; i++) {
 
