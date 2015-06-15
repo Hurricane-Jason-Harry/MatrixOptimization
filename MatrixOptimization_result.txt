@@ -1,0 +1,72 @@
+Total Execution Time:
+naive                                             :1.06085 speedup: 1.0000
+openmp                                            :0.29614 speedup: 3.5822
+simd                                              :0.33531 speedup: 3.1638
+cacheBlock                                        :1.09637 speedup: 0.9676
+loopUnroll                                        :0.69259 speedup: 1.5317
+registerBlock                                     :0.42293 speedup: 2.5083
+openmp&simd                                       :0.09574 speedup: 11.0804
+openmp&simd&cacheBlock                            :0.08183 speedup: 12.9639
+openmp&simd&cacheBlock&loopUnroll                 :0.06299 speedup: 16.8427
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :0.04086 speedup: 25.9603
+
+Total instruction executed:
+naive                                             :11821520754 ratio: 1.0000
+openmp                                            : 1747751731 ratio: 0.1478
+simd                                              : 1617829425 ratio: 0.1369
+cacheBlock                                        :11820483328 ratio: 0.9999
+loopUnroll                                        : 3400407682 ratio: 0.2876
+registerBlock                                     : 2755272261 ratio: 0.2331
+openmp&simd                                       :  337881034 ratio: 0.0286
+openmp&simd&cacheBlock                            :  339687142 ratio: 0.0287
+openmp&simd&cacheBlock&loopUnroll                 :  133304196 ratio: 0.0113
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :   46472994 ratio: 0.0039
+
+Total cycles executed:
+naive                                             : 3690867697 ratio: 1.0000
+openmp                                            :  969683443 ratio: 0.2627
+simd                                              : 1036327209 ratio: 0.2808
+cacheBlock                                        : 3801533636 ratio: 1.0300
+loopUnroll                                        : 2400155969 ratio: 0.6503
+registerBlock                                     : 1472130573 ratio: 0.3989
+openmp&simd                                       :  289031048 ratio: 0.0783
+openmp&simd&cacheBlock                            :  251349491 ratio: 0.0681
+openmp&simd&cacheBlock&loopUnroll                 :  193932354 ratio: 0.0525
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :  122959435 ratio: 0.0333
+
+Conditional branch instructions executed:
+naive                                             : 1074922578 ratio: 1.0000
+openmp                                            :  134602439 ratio: 0.1252
+simd                                              :  269616180 ratio: 0.2508
+cacheBlock                                        : 1074925620 ratio: 1.0000
+loopUnroll                                        :   34735160 ratio: 0.0323
+registerBlock                                     :   67503160 ratio: 0.0628
+openmp&simd                                       :   33846916 ratio: 0.0315
+openmp&simd&cacheBlock                            :   34213039 ratio: 0.0318
+openmp&simd&cacheBlock&loopUnroll                 :    4606613 ratio: 0.0043
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :     860577 ratio: 0.0008
+
+Level 1 data cache misses:
+naive                                             :  135040391 ratio: 1.0000
+openmp                                            :   19053929 ratio: 0.1411
+simd                                              :  135107996 ratio: 1.0005
+cacheBlock                                        :  134826986 ratio: 0.9984
+loopUnroll                                        :  135148194 ratio: 1.0008
+registerBlock                                     :  169715490 ratio: 1.2568
+openmp&simd                                       :   10531032 ratio: 0.0780
+openmp&simd&cacheBlock                            :   18168000 ratio: 0.1345
+openmp&simd&cacheBlock&loopUnroll                 :   17817543 ratio: 0.1319
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :   14814222 ratio: 0.1097
+
+Level 3 data cache misses:
+naive                                             :    1479386 ratio: 1.0000
+openmp                                            :      90393 ratio: 0.0611
+simd                                              :   26099579 ratio: 17.6422
+cacheBlock                                        :     236527 ratio: 0.1599
+loopUnroll                                        :    6619586 ratio: 4.4745
+registerBlock                                     :    3385264 ratio: 2.2883
+openmp&simd                                       :     293948 ratio: 0.1987
+openmp&simd&cacheBlock                            :     113900 ratio: 0.0770
+openmp&simd&cacheBlock&loopUnroll                 :     160638 ratio: 0.1086
+openmp&simd&cacheBlock&loopUnroll&registerBlock   :     119333 ratio: 0.0807
+
