@@ -1,5 +1,21 @@
 #include "header.h"
 
+void reference(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2) {
+	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
+	for (int i = 0; i < WIDTH; i++)
+	{
+		for (int k = 0; k < WIDTH; k++)
+		{
+			double t = matrix1[i*WIDTH+k];
+			for (int j = 0; j < HEIGHT; j++)
+			{
+				result[i*WIDTH+j] += t*matrix2[k*WIDTH+j];
+			}
+		}
+	}
+}
+
 void naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));

@@ -18,8 +18,12 @@
 
 #define NUM_OF_OPTIMIZATIONS 10
 
+#define NUM_OF_EVENTS 5
 
 extern int compare_matrix(const double* sample, const double* reference);
+
+extern void reference(double* restrict result,
+		const double* restrict matrix1, const double* restrict matrix2);
 
 extern void naive(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2);
