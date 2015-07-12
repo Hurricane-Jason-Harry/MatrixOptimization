@@ -100,7 +100,8 @@ void simd(double* restrict result,
         : "=r"(vector_length)
         : "r"(SIZE)
         );
-    printf("%u\n", vector_length);
+    // printf("hello?\n");
+    // printf("%d\n", vector_length);
 	#endif
 }
 

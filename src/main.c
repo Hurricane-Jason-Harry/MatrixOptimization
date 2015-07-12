@@ -7,7 +7,6 @@
  Description : 1024*1024 double-precision matrix multiply
  ============================================================================
  */
-#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -20,6 +19,7 @@
 #include "utils.h"
 
 #ifdef __AVX2__
+#include <omp.h>
 #include <xmmintrin.h>
 #include <immintrin.h>
 #include <x86intrin.h>
@@ -59,6 +59,6 @@ int main(int argc, char *argv[])
 		printf("incorrect");
 		return 0;
 	}
-	printf("%lld", time);
+	printf("%lu", time);
 	return 0;
 }
