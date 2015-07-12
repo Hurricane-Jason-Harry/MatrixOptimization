@@ -1,1123 +1,493 @@
 	.file	"optimizations.c"
 	.text
-	.type	optimization_openmp._omp_fn.0, @function
-optimization_openmp._omp_fn.0:
-.LFB1055:
-	.cfi_startproc
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
-	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
-	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
-	movq	%rdi, %rbx
-	call	omp_get_num_threads
-	movl	%eax, %ebp
-	call	omp_get_thread_num
-	movl	%eax, %ecx
-	movl	$1024, %eax
-	cltd
-	idivl	%ebp
-	movl	%eax, %r12d
-	movl	%edx, %esi
-	cmpl	%edx, %ecx
-	jl	.L2
-.L10:
-	imull	%r12d, %ecx
-	leal	(%rcx,%rsi), %ebp
-	addl	%ebp, %r12d
-	cmpl	%r12d, %ebp
-	jge	.L1
-	movl	%ebp, %edi
-	sall	$10, %edi
-	vxorpd	%xmm2, %xmm2, %xmm2
+	.align	2
+	.globl	optimize
+	.type	optimize, @function
+optimize:
+	ret
+	.size	optimize, .-optimize
+	.align	2
+	.globl	naive
+	.type	naive, @function
+naive:
+	add	sp,sp,-48
+	sd	s1,24(sp)
+	li	s1,8388608
+	sd	s0,32(sp)
+	sd	s2,16(sp)
+	mv	s0,a1
+	mv	s2,a2
+	mv	a1,zero
+	mv	a2,s1
+	sd	s3,8(sp)
+	sd	ra,40(sp)
+	mv	s3,a0
+	call	memset
+	li	a7,8192
+	mv	a6,s3
+	add	a1,s0,a7
+	add	s1,s3,s1
+	li	t0,-8192
+.L3:
+	add	a2,a1,t0
+	mv	a0,s2
+	add	a3,a6,a7
 .L5:
-	movl	$0, %r10d
-.L7:
-	movq	8(%rbx), %r9
-	movq	16(%rbx), %r8
-	movl	%r10d, %r11d
-	movl	%r10d, %edx
-	movl	$0, %eax
-	vmovapd	%xmm2, %xmm0
-	jmp	.L4
-.L6:
-	addl	$1, %ebp
-	addl	$1024, %edi
-	cmpl	%r12d, %ebp
-	jne	.L5
-	jmp	.L1
-.L11:
-	leal	(%r11,%rdi), %edx
-	movslq	%edx, %rdx
-	movq	(%rbx), %rax
-	vmovsd	%xmm0, (%rax,%rdx,8)
-	addl	$1, %r10d
-	cmpl	$1024, %r10d
-	jne	.L7
-	jmp	.L6
+	fld	ft2,0(a2)
+	mv	a4,a0
+	mv	a5,a6
 .L4:
-	leal	(%rax,%rdi), %esi
-	movslq	%esi, %rsi
-	movslq	%edx, %rcx
-	vmovsd	(%r9,%rsi,8), %xmm1
-	vmulsd	(%r8,%rcx,8), %xmm1, %xmm1
-	vaddsd	%xmm1, %xmm0, %xmm0
-	addl	$1, %eax
-	addl	$1024, %edx
-	cmpl	$1024, %eax
-	jne	.L4
-	jmp	.L11
-.L2:
-	leal	1(%rax), %r12d
-	movl	$0, %esi
-	jmp	.L10
-.L1:
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
+	fld	ft0,0(a4)
+	fld	ft1,0(a5)
+	add	a5,a5,8
+	fmul.d	ft0,ft2,ft0
+	add	a4,a4,8
+	fadd.d	ft0,ft1,ft0
+	fsd	ft0,-8(a5)
+	bne	a3,a5,.L4
+	add	a2,a2,8
+	add	a0,a0,a7
+	bne	a2,a1,.L5
+	li	a1,8192
+	add	a1,a2,a1
+	mv	a6,a3
+	bne	a3,s1,.L3
+	ld	ra,40(sp)
+	ld	s0,32(sp)
+	ld	s1,24(sp)
+	ld	s2,16(sp)
+	ld	s3,8(sp)
+	add	sp,sp,48
+	jr	ra
+	.size	naive, .-naive
+	.align	2
+	.globl	openmp
+	.type	openmp, @function
+openmp:
 	ret
-	.cfi_endproc
-.LFE1055:
-	.size	optimization_openmp._omp_fn.0, .-optimization_openmp._omp_fn.0
-	.type	optimization_openmp_simd._omp_fn.1, @function
-optimization_openmp_simd._omp_fn.1:
-.LFB1056:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	pushq	%r12
-	pushq	%rbx
-	andq	$-32, %rsp
-	.cfi_offset 12, -24
-	.cfi_offset 3, -32
-	movq	%rdi, %rbx
-	call	omp_get_num_threads
-	movl	%eax, %r12d
-	call	omp_get_thread_num
-	movl	%eax, %esi
-	movl	$1024, %eax
-	cltd
-	idivl	%r12d
-	movl	%eax, %ecx
-	movl	%edx, %edi
-	cmpl	%edx, %esi
-	jl	.L14
-.L22:
-	imull	%ecx, %esi
-	leal	(%rsi,%rdi), %r9d
-	leal	(%r9,%rcx), %r11d
-	cmpl	%r11d, %r9d
-	jge	.L13
-	movl	%r9d, %r10d
-	sall	$10, %r10d
-	vxorpd	%xmm2, %xmm2, %xmm2
-.L17:
-	movslq	%r10d, %r8
-	salq	$3, %r8
-	leaq	8192(%r8), %rsi
-	movl	$0, %edi
-.L19:
-	movq	%rdi, %rdx
-	movq	%r8, %rax
-	vmovapd	%ymm2, %ymm0
-	jmp	.L16
-.L18:
-	addl	$1, %r9d
-	addl	$1024, %r10d
-	cmpl	%r9d, %r11d
-	jg	.L17
-	jmp	.L13
-.L23:
-	movq	%rdi, %rax
-	addq	(%rbx), %rax
-	vmovupd	%ymm0, (%rax,%r8)
-	addq	$32, %rdi
-	cmpq	$8192, %rdi
-	jne	.L19
-	jmp	.L18
-.L16:
-	movq	%rax, %rcx
-	addq	8(%rbx), %rcx
-	vbroadcastsd	(%rcx), %ymm1
-	movq	16(%rbx), %rcx
-	vfmadd231pd	(%rcx,%rdx), %ymm1, %ymm0
-	addq	$8, %rax
-	addq	$8192, %rdx
-	cmpq	%rsi, %rax
-	jne	.L16
-	jmp	.L23
+	.size	openmp, .-openmp
+	.align	2
+	.globl	simd
+	.type	simd, @function
+simd:
+	ret
+	.size	simd, .-simd
+	.align	2
+	.globl	cacheBlock
+	.type	cacheBlock, @function
+cacheBlock:
+	add	sp,sp,-32
+	sd	s0,16(sp)
+	sd	s2,0(sp)
+	mv	s0,a1
+	mv	s2,a2
+	mv	a1,zero
+	li	a2,8388608
+	sd	s1,8(sp)
+	sd	ra,24(sp)
+	mv	s1,a0
+	call	memset
+	li	a5,4096
+	li	t3,8388608
+	add	a1,s0,a5
+	mv	t2,zero
+	add	t6,s1,t3
+	li	t5,-4096
+	li	t0,8192
+	li	t4,4194304
+	mv	t1,a5
 .L14:
-	leal	1(%rax), %ecx
-	movl	$0, %edi
-	jmp	.L22
-.L13:
-	leaq	-16(%rbp), %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE1056:
-	.size	optimization_openmp_simd._omp_fn.1, .-optimization_openmp_simd._omp_fn.1
-	.type	optimization_openmp_simd_cache_blocking._omp_fn.2, @function
-optimization_openmp_simd_cache_blocking._omp_fn.2:
-.LFB1057:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	pushq	%r15
-	pushq	%r14
-	pushq	%r13
-	pushq	%r12
-	pushq	%rbx
-	andq	$-32, %rsp
-	subq	$16, %rsp
-	.cfi_offset 15, -24
-	.cfi_offset 14, -32
-	.cfi_offset 13, -40
-	.cfi_offset 12, -48
-	.cfi_offset 3, -56
-	movq	%rdi, %rbx
-	call	omp_get_num_threads
-	movl	%eax, %r12d
-	call	omp_get_thread_num
-	movl	%eax, %esi
-	movl	$1024, %eax
-	cltd
-	idivl	%r12d
-	movl	%eax, %ecx
-	movl	%edx, %edi
-	cmpl	%edx, %esi
-	jl	.L26
-.L37:
-	imull	%ecx, %esi
-	leal	(%rsi,%rdi), %r14d
-	leal	(%r14,%rcx), %eax
-	movl	%eax, 8(%rsp)
-	cmpl	%eax, %r14d
-	jge	.L25
-	movl	%r14d, %ecx
-	sall	$10, %ecx
-.L29:
-	movslq	%ecx, %r10
-	leaq	0(,%r10,8), %rsi
-	leaq	8192(%rsi), %r13
-	movl	$0, %r12d
-	movl	%r14d, %edi
-.L31:
-	movl	%r12d, %r15d
-	sall	$10, %r15d
-	movq	%rsi, %r14
-	movl	$0, %r9d
-	leal	8(%r12), %r11d
-	jmp	.L28
-.L41:
-	movl	%edi, %r14d
-	addl	$1, %r14d
-	addl	$1024, %ecx
-	cmpl	%r14d, 8(%rsp)
-	jg	.L29
-	jmp	.L25
-.L42:
-	addl	$8, %r12d
-	cmpl	$1024, %r12d
-	jne	.L31
-	jmp	.L41
-.L28:
-	movq	(%rbx), %rax
-	vmovapd	(%rax,%r14), %ymm0
-	movl	%r15d, %edx
-	movl	%r12d, %eax
-	cmpl	%r12d, %r11d
-	jg	.L40
-.L35:
-	movq	(%rbx), %rax
-	vmovapd	%ymm0, (%rax,%r14)
-	addq	$32, %r14
-	addq	$4, %r9
-	cmpq	%r13, %r14
-	jne	.L28
-	jmp	.L42
-.L40:
-	movl	%ecx, 12(%rsp)
-.L38:
-	movslq	%eax, %r8
-	addq	%r10, %r8
-	movq	8(%rbx), %rcx
-	vbroadcastsd	(%rcx,%r8,8), %ymm1
-	movslq	%edx, %r8
-	addq	%r9, %r8
-	movq	16(%rbx), %rcx
-	vfmadd231pd	(%rcx,%r8,8), %ymm1, %ymm0
-	addl	$1, %eax
-	addl	$1024, %edx
-	cmpl	%eax, %r11d
-	jg	.L38
-	movl	12(%rsp), %ecx
-	jmp	.L35
+	mv	a7,s1
+	mv	a6,a1
+	add	s0,s2,t2
+.L19:
+	add	a2,a6,t5
+	mv	a0,s0
+	add	a3,a7,t0
+.L16:
+	fld	ft2,0(a2)
+	mv	a4,a0
+	mv	a5,a7
+.L15:
+	fld	ft0,0(a4)
+	fld	ft1,0(a5)
+	add	a5,a5,8
+	fmul.d	ft0,ft2,ft0
+	add	a4,a4,8
+	fadd.d	ft0,ft1,ft0
+	fsd	ft0,-8(a5)
+	bne	a3,a5,.L15
+	add	a2,a2,8
+	add	a0,a0,t0
+	bne	a6,a2,.L16
+	li	a5,8192
+	add	a6,a6,a5
+	mv	a7,a3
+	bne	t6,a3,.L19
+	add	t2,t2,t4
+	add	a1,a1,t1
+	bne	t2,t3,.L14
+	ld	ra,24(sp)
+	ld	s0,16(sp)
+	ld	s1,8(sp)
+	ld	s2,0(sp)
+	add	sp,sp,32
+	jr	ra
+	.size	cacheBlock, .-cacheBlock
+	.align	2
+	.globl	loopUnroll
+	.type	loopUnroll, @function
+loopUnroll:
+	add	sp,sp,-80
+	sd	s1,56(sp)
+	li	s1,8388608
+	sd	s0,64(sp)
+	sd	s2,48(sp)
+	mv	s0,a1
+	mv	s2,a2
+	mv	a1,zero
+	mv	a2,s1
+	sd	s3,40(sp)
+	sd	ra,72(sp)
+	mv	s3,a0
+	fsd	fs0,24(sp)
+	fsd	fs1,16(sp)
+	fsd	fs2,8(sp)
+	call	memset
+	li	a1,8192
+	mv	t0,a1
+	mv	a7,s3
+	add	a1,s0,a1
+	add	s1,s3,s1
+	li	t2,-8192
+	li	a2,1024
+	mv	t1,t0
 .L26:
-	leal	1(%rax), %ecx
-	movl	$0, %edi
-	jmp	.L37
+	add	a0,a1,t2
+	mv	a6,s2
 .L25:
-	leaq	-40(%rbp), %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%r13
-	popq	%r14
-	popq	%r15
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE1057:
-	.size	optimization_openmp_simd_cache_blocking._omp_fn.2, .-optimization_openmp_simd_cache_blocking._omp_fn.2
-	.type	optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3, @function
-optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3:
-.LFB1058:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	pushq	%r14
-	pushq	%r13
-	pushq	%r12
-	pushq	%rbx
-	andq	$-32, %rsp
-	.cfi_offset 14, -24
-	.cfi_offset 13, -32
-	.cfi_offset 12, -40
-	.cfi_offset 3, -48
-	movq	%rdi, %rbx
-	call	omp_get_num_threads
-	movl	%eax, %r12d
-	call	omp_get_thread_num
-	movl	%eax, %esi
-	movl	$1024, %eax
-	cltd
-	idivl	%r12d
-	movl	%eax, %ecx
-	movl	%edx, %edi
-	cmpl	%edx, %esi
-	jl	.L45
-.L53:
-	imull	%ecx, %esi
-	leal	(%rsi,%rdi), %r12d
-	leal	(%r12,%rcx), %r14d
-	cmpl	%r14d, %r12d
-	jge	.L44
-	movl	%r12d, %r13d
-	sall	$10, %r13d
-.L48:
-	movslq	%r13d, %rax
-	leaq	0(,%rax,8), %rdi
-	negq	%rax
-	leaq	0(,%rax,8), %r8
-	leaq	8192(%rdi), %r10
-	movq	%rdi, %r11
-	movq	%r10, %r9
-.L50:
-	movq	%r11, %rcx
-	jmp	.L47
-.L49:
-	addl	$1, %r12d
-	addl	$1024, %r13d
-	cmpl	%r12d, %r14d
-	jg	.L48
-	jmp	.L44
-.L54:
-	addq	$64, %rdi
-	addq	$65536, %r8
-	cmpq	%r10, %rdi
-	jne	.L50
-	jmp	.L49
-.L47:
-	movq	(%rbx), %rsi
-	movq	%rdi, %rdx
-	addq	8(%rbx), %rdx
-	leaq	(%r8,%rcx), %rax
-	addq	16(%rbx), %rax
-	vbroadcastsd	(%rdx), %ymm0
-	vmovapd	(%rsi,%rcx), %ymm2
-	vfmadd132pd	(%rax), %ymm2, %ymm0
-	vbroadcastsd	8(%rdx), %ymm1
-	vfmadd231pd	8192(%rax), %ymm1, %ymm0
-	vbroadcastsd	16(%rdx), %ymm1
-	vfmadd231pd	16384(%rax), %ymm1, %ymm0
-	vbroadcastsd	24(%rdx), %ymm1
-	vfmadd231pd	24576(%rax), %ymm1, %ymm0
-	vbroadcastsd	32(%rdx), %ymm1
-	vfmadd231pd	32768(%rax), %ymm1, %ymm0
-	vbroadcastsd	40(%rdx), %ymm1
-	vfmadd231pd	40960(%rax), %ymm1, %ymm0
-	vbroadcastsd	48(%rdx), %ymm1
-	vfmadd231pd	49152(%rax), %ymm1, %ymm0
-	vbroadcastsd	56(%rdx), %ymm1
-	vfmadd231pd	57344(%rax), %ymm1, %ymm0
-	vmovapd	%ymm0, (%rsi,%rcx)
-	addq	$32, %rcx
-	cmpq	%r9, %rcx
-	jne	.L47
-	jmp	.L54
-.L45:
-	leal	1(%rax), %ecx
-	movl	$0, %edi
-	jmp	.L53
-.L44:
-	leaq	-32(%rbp), %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%r13
-	popq	%r14
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE1058:
-	.size	optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3, .-optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3
-	.type	optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4, @function
-optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4:
-.LFB1059:
-	.cfi_startproc
-	pushq	%rbp
-	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
-	pushq	%r14
-	pushq	%r13
-	pushq	%r12
-	pushq	%rbx
-	andq	$-32, %rsp
-	.cfi_offset 14, -24
-	.cfi_offset 13, -32
-	.cfi_offset 12, -40
-	.cfi_offset 3, -48
-	movq	%rdi, %rbx
-	call	omp_get_num_threads
-	movl	%eax, %r12d
-	call	omp_get_thread_num
-	movl	%eax, %ecx
-	movl	$1024, %eax
-	cltd
-	idivl	%r12d
-	movl	%eax, %r11d
-	movl	%edx, %esi
-	cmpl	%edx, %ecx
-	jl	.L57
-.L71:
-	imull	%r11d, %ecx
-	leal	(%rcx,%rsi), %r9d
-	addl	%r9d, %r11d
-	cmpl	%r11d, %r9d
-	jge	.L56
-	movl	%r9d, %r10d
-	sall	$10, %r10d
-.L60:
-	movslq	%r10d, %rax
-	leaq	0(,%rax,8), %r8
-	negq	%rax
-	leaq	0(,%rax,8), %r14
-	leaq	8160(%r8), %r13
-	movq	%r8, %r12
-	leaq	8192(%r8), %rdi
-	movq	%r14, %rsi
-	jmp	.L59
-.L72:
-	addl	$1, %r9d
-	addl	$1024, %r10d
-	cmpl	%r9d, %r11d
-	jg	.L60
-	jmp	.L56
-.L68:
-	movq	%rdi, %rax
-	addq	8(%rbx), %rax
-	vbroadcastsd	(%rax), %ymm0
-	movq	%r12, %rax
-	jmp	.L61
-.L73:
-	addq	$8, %rdi
-	addq	$8192, %r14
-	cmpq	%r8, %rdi
-	jne	.L68
-	jmp	.L72
-.L61:
-	movq	%rax, %rdx
-	addq	(%rbx), %rdx
-	leaq	(%r14,%rax), %rcx
-	addq	16(%rbx), %rcx
-	vmovapd	(%rcx), %ymm2
-	vfmadd213pd	(%rdx), %ymm0, %ymm2
-	vmovapd	32(%rcx), %ymm1
-	vfmadd213pd	32(%rdx), %ymm0, %ymm1
-	vmovapd	%ymm2, (%rdx)
-	vmovapd	%ymm1, 32(%rdx)
-	addq	$64, %rax
-	cmpq	%rsi, %rax
-	jne	.L61
-	jmp	.L73
-.L59:
-	movq	%r8, %rax
-	addq	8(%rbx), %rax
-	vbroadcastsd	(%rax), %ymm11
-	vbroadcastsd	8(%rax), %ymm10
-	vbroadcastsd	16(%rax), %ymm9
-	vbroadcastsd	24(%rax), %ymm8
-	vbroadcastsd	32(%rax), %ymm7
-	vbroadcastsd	40(%rax), %ymm6
-	vbroadcastsd	48(%rax), %ymm5
-	vbroadcastsd	56(%rax), %ymm4
-	vbroadcastsd	64(%rax), %ymm3
-	vbroadcastsd	72(%rax), %ymm2
-	vbroadcastsd	80(%rax), %ymm1
-	vbroadcastsd	88(%rax), %ymm0
-	movq	%r12, %rdx
-	jmp	.L66
-.L74:
-	addq	$96, %r8
-	addq	$98304, %rsi
-	cmpq	%r13, %r8
-	jne	.L59
-	leaq	8160(%r12), %rdi
-	addq	$8355840, %r14
-	leaq	8192(%r12), %r8
-	movq	%r8, %rsi
-	jmp	.L68
-.L66:
-	movq	%rdx, %rcx
-	addq	(%rbx), %rcx
-	leaq	(%rsi,%rdx), %rax
-	addq	16(%rbx), %rax
-	vmovapd	(%rax), %ymm13
-	vfmadd213pd	(%rcx), %ymm11, %ymm13
-	vmovapd	32(%rax), %ymm12
-	vfmadd213pd	32(%rcx), %ymm11, %ymm12
-	vfmadd231pd	8192(%rax), %ymm10, %ymm13
-	vfmadd231pd	8224(%rax), %ymm10, %ymm12
-	vfmadd231pd	16384(%rax), %ymm9, %ymm13
-	vfmadd231pd	16416(%rax), %ymm9, %ymm12
-	vfmadd231pd	24576(%rax), %ymm8, %ymm13
-	vfmadd231pd	24608(%rax), %ymm8, %ymm12
-	vfmadd231pd	32768(%rax), %ymm7, %ymm13
-	vfmadd231pd	32800(%rax), %ymm7, %ymm12
-	vfmadd231pd	40960(%rax), %ymm6, %ymm13
-	vfmadd231pd	40992(%rax), %ymm6, %ymm12
-	vfmadd231pd	49152(%rax), %ymm5, %ymm13
-	vfmadd231pd	49184(%rax), %ymm5, %ymm12
-	vfmadd231pd	57344(%rax), %ymm4, %ymm13
-	vfmadd231pd	57376(%rax), %ymm4, %ymm12
-	vfmadd231pd	65536(%rax), %ymm3, %ymm13
-	vfmadd231pd	65568(%rax), %ymm3, %ymm12
-	vfmadd231pd	73728(%rax), %ymm2, %ymm13
-	vfmadd231pd	73760(%rax), %ymm2, %ymm12
-	vfmadd231pd	81920(%rax), %ymm1, %ymm13
-	vfmadd231pd	81952(%rax), %ymm1, %ymm12
-	vfmadd231pd	90112(%rax), %ymm0, %ymm13
-	vfmadd231pd	90144(%rax), %ymm0, %ymm12
-	vmovapd	%ymm13, (%rcx)
-	vmovapd	%ymm12, 32(%rcx)
-	addq	$64, %rdx
-	cmpq	%rdi, %rdx
-	jne	.L66
-	jmp	.L74
-.L57:
-	leal	1(%rax), %r11d
-	movl	$0, %esi
-	jmp	.L71
-.L56:
-	leaq	-32(%rbp), %rsp
-	popq	%rbx
-	popq	%r12
-	popq	%r13
-	popq	%r14
-	popq	%rbp
-	.cfi_def_cfa 7, 8
-	ret
-	.cfi_endproc
-.LFE1059:
-	.size	optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4, .-optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4
-	.globl	optimization_naive
-	.type	optimization_naive, @function
-optimization_naive:
-.LFB1045:
-	.cfi_startproc
-	pushq	%rbx
-	.cfi_def_cfa_offset 16
-	.cfi_offset 3, -16
-	movq	%rdi, %rbx
-	movl	$0, %r10d
-	vxorpd	%xmm2, %xmm2, %xmm2
-	jmp	.L77
-.L80:
-	leal	(%rax,%r10), %r9d
-	movslq	%r9d, %r9
-	movslq	%ecx, %r8
-	vmovsd	(%rsi,%r9,8), %xmm1
-	vmulsd	(%rdx,%r8,8), %xmm1, %xmm1
-	vaddsd	%xmm1, %xmm0, %xmm0
-	addl	$1, %eax
-	addl	$1024, %ecx
-	cmpl	$1024, %eax
-	jne	.L80
-	leal	(%r10,%rdi), %eax
-	cltq
-	vmovsd	%xmm0, (%rbx,%rax,8)
-	addl	$1, %r11d
-	cmpl	$1024, %r11d
-	je	.L79
-.L82:
-	movl	%r11d, %edi
-	movl	%r11d, %ecx
-	movl	$0, %eax
-	vmovapd	%xmm2, %xmm0
-	jmp	.L80
-.L79:
-	addl	$1024, %r10d
-	cmpl	$1048576, %r10d
-	je	.L76
-.L77:
-	movl	$0, %r11d
-	jmp	.L82
-.L76:
-	popq	%rbx
-	.cfi_def_cfa_offset 8
-	ret
-	.cfi_endproc
-.LFE1045:
-	.size	optimization_naive, .-optimization_naive
-	.globl	optimization_openmp
-	.type	optimization_openmp, @function
-optimization_openmp:
-.LFB1046:
-	.cfi_startproc
-	subq	$40, %rsp
-	.cfi_def_cfa_offset 48
-	movq	%rdi, (%rsp)
-	movq	%rsi, 8(%rsp)
-	movq	%rdx, 16(%rsp)
-	movl	$0, %edx
-	movq	%rsp, %rsi
-	movl	$optimization_openmp._omp_fn.0, %edi
-	call	GOMP_parallel_start
-	movq	%rsp, %rdi
-	call	optimization_openmp._omp_fn.0
-	call	GOMP_parallel_end
-	addq	$40, %rsp
-	.cfi_def_cfa_offset 8
-	ret
-	.cfi_endproc
-.LFE1046:
-	.size	optimization_openmp, .-optimization_openmp
-	.globl	optimization_simd
-	.type	optimization_simd, @function
-optimization_simd:
-.LFB1047:
-	.cfi_startproc
-	movq	%rdi, %r8
-	leaq	8388608(%rdi), %r9
-	vxorpd	%xmm2, %xmm2, %xmm2
-	jmp	.L87
-.L90:
-	vbroadcastsd	(%rsi,%rax), %ymm1
-	vfmadd231pd	(%rcx), %ymm1, %ymm0
-	addq	$8, %rax
-	addq	$8192, %rcx
-	cmpq	$8192, %rax
-	jne	.L90
-	vmovupd	%ymm0, (%r8,%rdi)
-	addq	$32, %rdi
-	cmpq	$8192, %rdi
-	je	.L89
-.L92:
-	leaq	(%rdx,%rdi), %rcx
-	movl	$0, %eax
-	vmovapd	%ymm2, %ymm0
-	jmp	.L90
-.L89:
-	addq	$8192, %r8
-	addq	$8192, %rsi
-	cmpq	%r9, %r8
-	je	.L86
-.L87:
-	movl	$0, %edi
-	jmp	.L92
-.L86:
-	ret
-	.cfi_endproc
-.LFE1047:
-	.size	optimization_simd, .-optimization_simd
-	.globl	optimization_cache_blocking
-	.type	optimization_cache_blocking, @function
-optimization_cache_blocking:
-.LFB1048:
-	.cfi_startproc
-	pushq	%r15
-	.cfi_def_cfa_offset 16
-	.cfi_offset 15, -16
-	pushq	%r14
-	.cfi_def_cfa_offset 24
-	.cfi_offset 14, -24
-	pushq	%r13
-	.cfi_def_cfa_offset 32
-	.cfi_offset 13, -32
-	pushq	%r12
-	.cfi_def_cfa_offset 40
-	.cfi_offset 12, -40
-	pushq	%rbp
-	.cfi_def_cfa_offset 48
-	.cfi_offset 6, -48
-	pushq	%rbx
-	.cfi_def_cfa_offset 56
-	.cfi_offset 3, -56
-	subq	$8, %rsp
-	.cfi_def_cfa_offset 64
-	movq	%rdi, %r12
-	movq	%rsi, %rbp
-	movq	%rdx, %rbx
-	movl	$8388608, %edx
-	movl	$0, %esi
+	fld	ft0,0(a0)
+	mv	a4,a6
+	mv	a5,a7
+	mv	a3,zero
+.L24:
+	fld	fs1,0(a4)
+	fld	ft11,8(a4)
+	fld	ft9,16(a4)
+	fld	fa7,24(a4)
+	fld	fa5,32(a4)
+	fld	fa3,40(a4)
+	fld	fa1,48(a4)
+	fld	ft7,56(a4)
+	fld	ft5,64(a4)
+	fld	ft3,72(a4)
+	fld	ft1,80(a4)
+	fmul.d	fs1,ft0,fs1
+	fmul.d	ft11,ft0,ft11
+	fmul.d	ft9,ft0,ft9
+	fmul.d	fa7,ft0,fa7
+	fmul.d	fa5,ft0,fa5
+	fmul.d	fa3,ft0,fa3
+	fmul.d	fa1,ft0,fa1
+	fmul.d	ft7,ft0,ft7
+	fmul.d	ft5,ft0,ft5
+	fmul.d	ft3,ft0,ft3
+	fmul.d	ft1,ft0,ft1
+	fld	fs0,8(a5)
+	fld	ft10,16(a5)
+	fld	ft8,24(a5)
+	fld	fa6,32(a5)
+	fld	fa4,40(a5)
+	fld	fa2,48(a5)
+	fld	fa0,56(a5)
+	fld	ft6,64(a5)
+	fld	ft4,72(a5)
+	fld	fs2,0(a5)
+	fld	ft2,80(a5)
+	fadd.d	ft11,fs0,ft11
+	fadd.d	fs1,fs2,fs1
+	fadd.d	ft9,ft10,ft9
+	fadd.d	fa7,ft8,fa7
+	fadd.d	fa5,fa6,fa5
+	fadd.d	fa3,fa4,fa3
+	fadd.d	fa1,fa2,fa1
+	fadd.d	ft7,fa0,ft7
+	fadd.d	ft5,ft6,ft5
+	fadd.d	ft3,ft4,ft3
+	fadd.d	ft1,ft2,ft1
+	fsd	fs1,0(a5)
+	fsd	ft11,8(a5)
+	fsd	ft9,16(a5)
+	fsd	fa7,24(a5)
+	fsd	fa5,32(a5)
+	fsd	fa3,40(a5)
+	fsd	fa1,48(a5)
+	fsd	ft7,56(a5)
+	fsd	ft5,64(a5)
+	fsd	ft3,72(a5)
+	fsd	ft1,80(a5)
+	fld	fs0,88(a4)
+	fld	ft11,96(a4)
+	fld	ft9,104(a4)
+	fld	fa7,112(a4)
+	fld	fa5,120(a4)
+	fld	fa3,128(a4)
+	fld	fa1,136(a4)
+	fld	ft7,144(a4)
+	fld	ft5,152(a4)
+	fld	ft3,160(a4)
+	fld	ft1,168(a4)
+	fmul.d	fs0,ft0,fs0
+	fmul.d	ft11,ft0,ft11
+	fmul.d	ft9,ft0,ft9
+	fmul.d	fa7,ft0,fa7
+	fmul.d	fa5,ft0,fa5
+	fmul.d	fa3,ft0,fa3
+	fmul.d	fa1,ft0,fa1
+	fmul.d	ft7,ft0,ft7
+	fmul.d	ft5,ft0,ft5
+	fmul.d	ft3,ft0,ft3
+	fmul.d	ft1,ft0,ft1
+	fld	ft10,104(a5)
+	fld	ft8,112(a5)
+	fld	fa6,120(a5)
+	fld	fa4,128(a5)
+	fld	fa2,136(a5)
+	fld	fa0,144(a5)
+	fld	ft6,152(a5)
+	fld	ft4,160(a5)
+	fld	ft2,168(a5)
+	fld	fs1,88(a5)
+	fld	fs2,96(a5)
+	fadd.d	ft9,ft10,ft9
+	fadd.d	fa7,ft8,fa7
+	fadd.d	fa5,fa6,fa5
+	fadd.d	fa3,fa4,fa3
+	fadd.d	fa1,fa2,fa1
+	fadd.d	ft7,fa0,ft7
+	fadd.d	ft5,ft6,ft5
+	fadd.d	ft3,ft4,ft3
+	fadd.d	ft1,ft2,ft1
+	fadd.d	fs0,fs1,fs0
+	fadd.d	ft11,fs2,ft11
+	fsd	ft9,104(a5)
+	fsd	fa7,112(a5)
+	fsd	fs0,88(a5)
+	fsd	ft11,96(a5)
+	fsd	fa5,120(a5)
+	fsd	fa3,128(a5)
+	fsd	fa1,136(a5)
+	fsd	ft7,144(a5)
+	fsd	ft5,152(a5)
+	fsd	ft3,160(a5)
+	fsd	ft1,168(a5)
+	fld	ft11,176(a4)
+	fld	ft9,184(a4)
+	fld	fa7,192(a4)
+	fld	fa5,200(a4)
+	fld	fa3,208(a4)
+	fld	fa1,216(a4)
+	fld	ft7,224(a4)
+	fld	ft5,232(a4)
+	fld	ft3,240(a4)
+	fld	ft1,248(a4)
+	fmul.d	ft11,ft0,ft11
+	fmul.d	ft9,ft0,ft9
+	fmul.d	fa7,ft0,fa7
+	fmul.d	fa5,ft0,fa5
+	fmul.d	fa3,ft0,fa3
+	fmul.d	fa1,ft0,fa1
+	fmul.d	ft7,ft0,ft7
+	fmul.d	ft5,ft0,ft5
+	fmul.d	ft3,ft0,ft3
+	fmul.d	ft1,ft0,ft1
+	fld	ft10,184(a5)
+	fld	ft8,192(a5)
+	fld	fa6,200(a5)
+	fld	fa4,208(a5)
+	fld	fa2,216(a5)
+	fld	fa0,224(a5)
+	fld	ft6,232(a5)
+	fld	ft4,240(a5)
+	fld	ft2,248(a5)
+	fld	fs0,176(a5)
+	fadd.d	ft9,ft10,ft9
+	fadd.d	fa7,ft8,fa7
+	fadd.d	ft11,fs0,ft11
+	fadd.d	fa5,fa6,fa5
+	fadd.d	fa3,fa4,fa3
+	fadd.d	fa1,fa2,fa1
+	fadd.d	ft7,fa0,ft7
+	fadd.d	ft5,ft6,ft5
+	fadd.d	ft3,ft4,ft3
+	fadd.d	ft1,ft2,ft1
+	addw	a3,a3,32
+	fsd	ft11,176(a5)
+	fsd	ft9,184(a5)
+	fsd	fa7,192(a5)
+	fsd	fa5,200(a5)
+	fsd	fa3,208(a5)
+	fsd	fa1,216(a5)
+	fsd	ft7,224(a5)
+	fsd	ft5,232(a5)
+	fsd	ft3,240(a5)
+	fsd	ft1,248(a5)
+	add	a4,a4,256
+	add	a5,a5,256
+	bne	a3,a2,.L24
+	add	a0,a0,8
+	add	a6,a6,t0
+	bne	a0,a1,.L25
+	add	a7,a7,t1
+	add	a1,a0,t1
+	bne	a7,s1,.L26
+	ld	ra,72(sp)
+	ld	s0,64(sp)
+	ld	s1,56(sp)
+	ld	s2,48(sp)
+	ld	s3,40(sp)
+	fld	fs0,24(sp)
+	fld	fs1,16(sp)
+	fld	fs2,8(sp)
+	add	sp,sp,80
+	jr	ra
+	.size	loopUnroll, .-loopUnroll
+	.align	2
+	.globl	registerBlock
+	.type	registerBlock, @function
+registerBlock:
+	add	sp,sp,-48
+	sd	s1,24(sp)
+	li	s1,8388608
+	sd	s0,32(sp)
+	sd	s2,16(sp)
+	mv	s0,a1
+	mv	s2,a2
+	mv	a1,zero
+	mv	a2,s1
+	sd	s3,8(sp)
+	sd	ra,40(sp)
+	mv	s3,a0
 	call	memset
-	movl	$0, %edi
-	jmp	.L94
-.L99:
-	movslq	%r9d, %rax
-	leaq	(%r12,%rax,8), %r10
-	vmovsd	(%r10), %xmm0
-	cmpl	%esi, %r11d
-	jge	.L95
-	leal	(%r9,%r14), %ecx
-	movl	%r11d, %eax
-.L96:
-	leal	(%rax,%rdi), %edx
-	movslq	%edx, %rdx
-	movslq	%ecx, %r8
-	vmovsd	0(%rbp,%rdx,8), %xmm1
-	vmulsd	(%rbx,%r8,8), %xmm1, %xmm1
-	vaddsd	%xmm1, %xmm0, %xmm0
-	addl	$1, %eax
-	addl	$1024, %ecx
-	cmpl	%esi, %eax
-	jl	.L96
-.L95:
-	vmovsd	%xmm0, (%r10)
-	addl	$1, %r9d
-	cmpl	%r13d, %r9d
-	jne	.L99
-	addl	$8, %r11d
-	addl	$8192, %r14d
-	cmpl	$1024, %r11d
-	je	.L98
-.L101:
-	movl	%r13d, %r15d
-	movl	%edi, %r9d
-	leal	8(%r11), %esi
-	jmp	.L99
-.L98:
-	cmpl	$1048576, %r15d
-	je	.L93
-	movl	%r15d, %edi
-.L94:
-	movl	%edi, %r14d
-	negl	%r14d
-	movl	$0, %r11d
-	leal	1024(%rdi), %r13d
-	jmp	.L101
-.L93:
-	addq	$8, %rsp
-	.cfi_def_cfa_offset 56
-	popq	%rbx
-	.cfi_def_cfa_offset 48
-	popq	%rbp
-	.cfi_def_cfa_offset 40
-	popq	%r12
-	.cfi_def_cfa_offset 32
-	popq	%r13
-	.cfi_def_cfa_offset 24
-	popq	%r14
-	.cfi_def_cfa_offset 16
-	popq	%r15
-	.cfi_def_cfa_offset 8
+	li	t0,8192
+	mv	t1,s3
+	add	a1,s0,t0
+	add	s1,s3,s1
+	li	t2,-8192
+	li	t4,16384
+	li	t3,32768
+.L34:
+	add	a7,a1,t2
+	add	a6,s2,t0
+.L33:
+	fld	fa7,0(a7)
+	fld	fa6,8(a7)
+	fld	fa5,16(a7)
+	fld	fa4,24(a7)
+	add	a4,a6,t2
+	add	a0,a6,t0
+	add	a2,a6,t4
+	mv	a3,a6
+	mv	a5,t1
+.L32:
+	fld	ft0,0(a4)
+	fld	ft6,8(a4)
+	fld	ft4,16(a4)
+	fld	ft2,24(a4)
+	fmul.d	ft7,fa7,ft0
+	fmul.d	ft5,fa7,ft6
+	fmul.d	ft3,fa7,ft4
+	fmul.d	ft1,fa7,ft2
+	fld	ft0,0(a3)
+	fld	ft6,8(a3)
+	fld	ft4,16(a3)
+	fld	ft2,24(a3)
+	fmul.d	ft11,fa6,ft0
+	fmul.d	ft10,fa6,ft6
+	fmul.d	ft9,fa6,ft4
+	fmul.d	ft8,fa6,ft2
+	fld	ft0,0(a5)
+	fld	ft6,8(a5)
+	fld	ft4,16(a5)
+	fld	ft2,24(a5)
+	fld	fa0,0(a0)
+	fld	fa3,8(a0)
+	fld	fa2,16(a0)
+	fld	fa1,24(a0)
+	fadd.d	ft0,ft7,ft0
+	fadd.d	ft6,ft5,ft6
+	fadd.d	ft4,ft3,ft4
+	fadd.d	ft2,ft1,ft2
+	fmul.d	fa0,fa5,fa0
+	fmul.d	fa3,fa5,fa3
+	fmul.d	fa2,fa5,fa2
+	fmul.d	fa1,fa5,fa1
+	fld	ft7,8(a2)
+	fld	ft5,16(a2)
+	fld	ft3,24(a2)
+	fld	ft1,0(a2)
+	fadd.d	ft0,ft11,ft0
+	fadd.d	ft6,ft10,ft6
+	fadd.d	ft4,ft9,ft4
+	fadd.d	ft2,ft8,ft2
+	fmul.d	ft7,fa4,ft7
+	fmul.d	ft5,fa4,ft5
+	fmul.d	ft3,fa4,ft3
+	fmul.d	ft1,fa4,ft1
+	fadd.d	ft0,fa0,ft0
+	fadd.d	ft6,fa3,ft6
+	fadd.d	ft4,fa2,ft4
+	fadd.d	ft2,fa1,ft2
+	add	a4,a4,32
+	fadd.d	ft6,ft7,ft6
+	fadd.d	ft4,ft5,ft4
+	fadd.d	ft2,ft3,ft2
+	fadd.d	ft0,ft1,ft0
+	fsd	ft6,8(a5)
+	fsd	ft4,16(a5)
+	fsd	ft2,24(a5)
+	fsd	ft0,0(a5)
+	add	a3,a3,32
+	add	a5,a5,32
+	add	a0,a0,32
+	add	a2,a2,32
+	bne	a6,a4,.L32
+	add	a7,a7,32
+	add	a6,a6,t3
+	bne	a7,a1,.L33
+	add	t1,t1,t0
+	add	a1,a7,t0
+	bne	t1,s1,.L34
+	ld	ra,40(sp)
+	ld	s0,32(sp)
+	ld	s1,24(sp)
+	ld	s2,16(sp)
+	ld	s3,8(sp)
+	add	sp,sp,48
+	jr	ra
+	.size	registerBlock, .-registerBlock
+	.align	2
+	.globl	openmp_simd
+	.type	openmp_simd, @function
+openmp_simd:
 	ret
-	.cfi_endproc
-.LFE1048:
-	.size	optimization_cache_blocking, .-optimization_cache_blocking
-	.globl	optimization_loop_unrolling
-	.type	optimization_loop_unrolling, @function
-optimization_loop_unrolling:
-.LFB1049:
-	.cfi_startproc
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
-	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
-	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
-	movq	%rdi, %r12
-	movl	$0, %edi
-	vxorpd	%xmm4, %xmm4, %xmm4
-	jmp	.L104
-.L107:
-	leal	(%r8,%rdi), %r11d
-	movslq	%r11d, %r11
-	leaq	0(,%r11,8), %rcx
-	movslq	%r9d, %r10
-	leaq	0(,%r10,8), %rax
-	vmovsd	(%rsi,%r11,8), %xmm1
-	vmulsd	(%rdx,%r10,8), %xmm1, %xmm1
-	vaddsd	%xmm0, %xmm1, %xmm0
-	vmovsd	8(%rsi,%rcx), %xmm1
-	vmulsd	8192(%rdx,%rax), %xmm1, %xmm1
-	vaddsd	%xmm0, %xmm1, %xmm0
-	vmovsd	16(%rsi,%rcx), %xmm1
-	vmulsd	16384(%rdx,%rax), %xmm1, %xmm1
-	vaddsd	%xmm0, %xmm1, %xmm1
-	vmovsd	24(%rsi,%rcx), %xmm0
-	vmulsd	24576(%rdx,%rax), %xmm0, %xmm0
-	vaddsd	%xmm1, %xmm0, %xmm0
-	vmovsd	32(%rsi,%rcx), %xmm3
-	vmulsd	32768(%rdx,%rax), %xmm3, %xmm3
-	vaddsd	%xmm0, %xmm3, %xmm3
-	vmovsd	40(%rsi,%rcx), %xmm2
-	vmulsd	40960(%rdx,%rax), %xmm2, %xmm2
-	vaddsd	%xmm3, %xmm2, %xmm2
-	vmovsd	48(%rsi,%rcx), %xmm1
-	vmulsd	49152(%rdx,%rax), %xmm1, %xmm1
-	vaddsd	%xmm2, %xmm1, %xmm1
-	vmovsd	56(%rsi,%rcx), %xmm0
-	vmulsd	57344(%rdx,%rax), %xmm0, %xmm0
-	vaddsd	%xmm1, %xmm0, %xmm0
-	addl	$8, %r8d
-	addl	$8192, %r9d
-	cmpl	$1024, %r8d
-	jne	.L107
-	leal	(%rdi,%rbp), %eax
-	cltq
-	vmovsd	%xmm0, (%r12,%rax,8)
-	addl	$1, %ebx
-	cmpl	$1024, %ebx
-	je	.L106
-.L109:
-	movl	%ebx, %ebp
-	movl	%ebx, %r9d
-	movl	$0, %r8d
-	vmovapd	%xmm4, %xmm0
-	jmp	.L107
-.L106:
-	addl	$1024, %edi
-	cmpl	$1048576, %edi
-	je	.L103
-.L104:
-	movl	$0, %ebx
-	jmp	.L109
-.L103:
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
+	.size	openmp_simd, .-openmp_simd
+	.align	2
+	.globl	openmp_simd_cacheBlock
+	.type	openmp_simd_cacheBlock, @function
+openmp_simd_cacheBlock:
 	ret
-	.cfi_endproc
-.LFE1049:
-	.size	optimization_loop_unrolling, .-optimization_loop_unrolling
-	.globl	optimization_register_blocking
-	.type	optimization_register_blocking, @function
-optimization_register_blocking:
-.LFB1050:
-	.cfi_startproc
-	movl	$0, %r10d
-	vxorpd	%xmm13, %xmm13, %xmm13
-	vmovapd	%xmm13, %xmm12
-	jmp	.L112
-.L115:
-	leal	(%r10,%rcx), %eax
-	cltq
-	vmovsd	(%rsi,%rax,8), %xmm0
-	movl	%ecx, %r8d
-	sall	$10, %r8d
-	addl	%r9d, %r8d
-	movslq	%r8d, %r8
-	leaq	0(,%r8,8), %rax
-	vmulsd	(%rdx,%r8,8), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm1, %xmm1
-	vmulsd	8(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm2, %xmm2
-	vmulsd	16(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm3, %xmm3
-	vmulsd	24(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm4, %xmm4
-	vmulsd	32(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm5, %xmm5
-	vmulsd	40(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm6, %xmm6
-	vmulsd	48(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm7, %xmm7
-	vmulsd	56(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm8, %xmm8
-	vmulsd	64(%rdx,%rax), %xmm0, %xmm11
-	vaddsd	%xmm11, %xmm9, %xmm9
-	vmulsd	72(%rdx,%rax), %xmm0, %xmm0
-	vaddsd	%xmm0, %xmm10, %xmm10
-	addq	$1, %rcx
-	cmpq	$1024, %rcx
-	jne	.L115
-	leal	(%r10,%r9), %ecx
-	movslq	%ecx, %rcx
-	leaq	0(,%rcx,8), %rax
-	vmovsd	%xmm1, (%rdi,%rcx,8)
-	vmovsd	%xmm2, 8(%rdi,%rax)
-	vmovsd	%xmm3, 16(%rdi,%rax)
-	vmovsd	%xmm4, 24(%rdi,%rax)
-	vmovsd	%xmm5, 32(%rdi,%rax)
-	vmovsd	%xmm6, 40(%rdi,%rax)
-	vmovsd	%xmm7, 48(%rdi,%rax)
-	vmovsd	%xmm8, 56(%rdi,%rax)
-	vmovsd	%xmm9, 64(%rdi,%rax)
-	vmovsd	%xmm10, 72(%rdi,%rax)
-	addl	$10, %r9d
-	cmpl	$1020, %r9d
-	je	.L114
-.L118:
-	movl	$0, %ecx
-	vmovapd	%xmm13, %xmm10
-	vmovapd	%xmm12, %xmm9
-	vmovapd	%xmm12, %xmm8
-	vmovapd	%xmm12, %xmm7
-	vmovapd	%xmm12, %xmm6
-	vmovapd	%xmm12, %xmm5
-	vmovapd	%xmm12, %xmm4
-	vmovapd	%xmm12, %xmm3
-	vmovapd	%xmm12, %xmm2
-	vmovapd	%xmm12, %xmm1
-	jmp	.L115
-.L114:
-	addl	$1024, %r10d
-	cmpl	$1048576, %r10d
-	jne	.L112
-	pushq	%rbx
-	.cfi_def_cfa_offset 16
-	.cfi_offset 3, -16
-	movl	$0, %r10d
-	vxorpd	%xmm2, %xmm2, %xmm2
-	jmp	.L117
-.L112:
-	.cfi_def_cfa_offset 8
-	.cfi_restore 3
-	movl	$0, %r9d
-	jmp	.L118
-.L121:
-	.cfi_def_cfa_offset 16
-	.cfi_offset 3, -16
-	leal	(%rax,%r10), %r9d
-	movslq	%r9d, %r9
-	movslq	%ecx, %r8
-	vmovsd	(%rsi,%r9,8), %xmm1
-	vmulsd	(%rdx,%r8,8), %xmm1, %xmm1
-	vaddsd	%xmm1, %xmm0, %xmm0
-	addl	$1, %eax
-	addl	$1024, %ecx
-	cmpl	$1024, %eax
-	jne	.L121
-	leal	(%rbx,%r10), %eax
-	cltq
-	vmovsd	%xmm0, (%rdi,%rax,8)
-	addl	$1, %r11d
-	cmpl	$1024, %r11d
-	je	.L120
-.L123:
-	movl	%r11d, %ebx
-	movl	%r11d, %ecx
-	movl	$0, %eax
-	vmovapd	%xmm2, %xmm0
-	jmp	.L121
-.L120:
-	addl	$1024, %r10d
-	cmpl	$1048576, %r10d
-	je	.L111
-.L117:
-	movl	$1020, %r11d
-	jmp	.L123
-.L111:
-	popq	%rbx
-	.cfi_restore 3
-	.cfi_def_cfa_offset 8
+	.size	openmp_simd_cacheBlock, .-openmp_simd_cacheBlock
+	.align	2
+	.globl	openmp_simd_cacheBlock_loopUnroll
+	.type	openmp_simd_cacheBlock_loopUnroll, @function
+openmp_simd_cacheBlock_loopUnroll:
 	ret
-	.cfi_endproc
-.LFE1050:
-	.size	optimization_register_blocking, .-optimization_register_blocking
-	.globl	optimization_openmp_simd
-	.type	optimization_openmp_simd, @function
-optimization_openmp_simd:
-.LFB1051:
-	.cfi_startproc
-	subq	$40, %rsp
-	.cfi_def_cfa_offset 48
-	movq	%rdi, (%rsp)
-	movq	%rsi, 8(%rsp)
-	movq	%rdx, 16(%rsp)
-	movl	$0, %edx
-	movq	%rsp, %rsi
-	movl	$optimization_openmp_simd._omp_fn.1, %edi
-	call	GOMP_parallel_start
-	movq	%rsp, %rdi
-	call	optimization_openmp_simd._omp_fn.1
-	call	GOMP_parallel_end
-	addq	$40, %rsp
-	.cfi_def_cfa_offset 8
+	.size	openmp_simd_cacheBlock_loopUnroll, .-openmp_simd_cacheBlock_loopUnroll
+	.align	2
+	.globl	openmp_simd_cacheBlock_loopUnroll_registerBlock
+	.type	openmp_simd_cacheBlock_loopUnroll_registerBlock, @function
+openmp_simd_cacheBlock_loopUnroll_registerBlock:
 	ret
-	.cfi_endproc
-.LFE1051:
-	.size	optimization_openmp_simd, .-optimization_openmp_simd
-	.globl	optimization_openmp_simd_cache_blocking
-	.type	optimization_openmp_simd_cache_blocking, @function
-optimization_openmp_simd_cache_blocking:
-.LFB1052:
-	.cfi_startproc
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
-	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
-	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
-	subq	$32, %rsp
-	.cfi_def_cfa_offset 64
-	movq	%rdi, %rbx
-	movq	%rsi, %r12
-	movq	%rdx, %rbp
-	movl	$8388608, %edx
-	movl	$0, %esi
-	call	memset
-	movq	%rbx, (%rsp)
-	movq	%r12, 8(%rsp)
-	movq	%rbp, 16(%rsp)
-	movl	$0, %edx
-	movq	%rsp, %rsi
-	movl	$optimization_openmp_simd_cache_blocking._omp_fn.2, %edi
-	call	GOMP_parallel_start
-	movq	%rsp, %rdi
-	call	optimization_openmp_simd_cache_blocking._omp_fn.2
-	call	GOMP_parallel_end
-	addq	$32, %rsp
-	.cfi_def_cfa_offset 32
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
-	ret
-	.cfi_endproc
-.LFE1052:
-	.size	optimization_openmp_simd_cache_blocking, .-optimization_openmp_simd_cache_blocking
-	.globl	optimization_openmp_simd_cache_blocking_loop_unrolling
-	.type	optimization_openmp_simd_cache_blocking_loop_unrolling, @function
-optimization_openmp_simd_cache_blocking_loop_unrolling:
-.LFB1053:
-	.cfi_startproc
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
-	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
-	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
-	subq	$32, %rsp
-	.cfi_def_cfa_offset 64
-	movq	%rdi, %rbx
-	movq	%rsi, %r12
-	movq	%rdx, %rbp
-	movl	$8388608, %edx
-	movl	$0, %esi
-	call	memset
-	movq	%rbx, (%rsp)
-	movq	%r12, 8(%rsp)
-	movq	%rbp, 16(%rsp)
-	movl	$0, %edx
-	movq	%rsp, %rsi
-	movl	$optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3, %edi
-	call	GOMP_parallel_start
-	movq	%rsp, %rdi
-	call	optimization_openmp_simd_cache_blocking_loop_unrolling._omp_fn.3
-	call	GOMP_parallel_end
-	addq	$32, %rsp
-	.cfi_def_cfa_offset 32
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
-	ret
-	.cfi_endproc
-.LFE1053:
-	.size	optimization_openmp_simd_cache_blocking_loop_unrolling, .-optimization_openmp_simd_cache_blocking_loop_unrolling
-	.globl	optimization_openmp_simd_cache_register_blocking_loop_unrolling
-	.type	optimization_openmp_simd_cache_register_blocking_loop_unrolling, @function
-optimization_openmp_simd_cache_register_blocking_loop_unrolling:
-.LFB1054:
-	.cfi_startproc
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
-	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
-	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
-	subq	$32, %rsp
-	.cfi_def_cfa_offset 64
-	movq	%rdi, %rbx
-	movq	%rsi, %r12
-	movq	%rdx, %rbp
-	movl	$8388608, %edx
-	movl	$0, %esi
-	call	memset
-	movq	%rbx, (%rsp)
-	movq	%r12, 8(%rsp)
-	movq	%rbp, 16(%rsp)
-	movl	$0, %edx
-	movq	%rsp, %rsi
-	movl	$optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4, %edi
-	call	GOMP_parallel_start
-	movq	%rsp, %rdi
-	call	optimization_openmp_simd_cache_register_blocking_loop_unrolling._omp_fn.4
-	call	GOMP_parallel_end
-	addq	$32, %rsp
-	.cfi_def_cfa_offset 32
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
-	ret
-	.cfi_endproc
-.LFE1054:
-	.size	optimization_openmp_simd_cache_register_blocking_loop_unrolling, .-optimization_openmp_simd_cache_register_blocking_loop_unrolling
-	.ident	"GCC: (Ubuntu 4.8.4-2ubuntu1~14.04) 4.8.4"
-	.section	.note.GNU-stack,"",@progbits
+	.size	openmp_simd_cacheBlock_loopUnroll_registerBlock, .-openmp_simd_cacheBlock_loopUnroll_registerBlock
+	.ident	"GCC: (GNU) 5.1.0"

@@ -1,5 +1,98 @@
-CFLAGS=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -g
-CFILES= main.c header.h utils.c optimizations.c
-LIB=/usr/local/lib/libpapi.a
-all: 
-	gcc $(CFLAGS) $(CFILES) -lm -o main ${LIB}
+ifndef TIMES
+TIMES:=1
+endif
+
+RISCV_CXX:=riscv64-unknown-elf-gcc
+RISCV_CXX_FLAGS:= -Wall -O3 -std=c99 -lm -o main
+
+X86_CXX:=gcc
+X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -lm -o main
+CFILES:=src/main.c src/optimizations.c src/utils.c src/config.c
+
+CMAKE_TEST_FILES:=src/make_test.c
+MAKE_TEST_FLAGS:= -Wall -std=c99 -lm -o make_testfile
+
+X86_FLUSH_CACHE_FILES:=src/x86_flush_cache.c
+X86_FLUSH_CACHE_FLAGS:= -Wall -std=c99 -O0 -fopenmp -o x86_flush_cache
+OPT:=_OP_NAIVE
+
+all: naive omp simd cb lu rb omp_simd omp_simd_cb \
+     omp_simd_cb_lu omp_simd_cb_lu_rb
+		 
+naive:
+	@echo naive:
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_NAIVE
+	
+omp:
+	@echo openmp:
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP
+	
+simd:
+	@echo simd:
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_SIMD
+	
+cb:
+	@echo cacheBlock
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_CACHEBLOCK
+
+lu:
+	@echo loopUnroll
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_LOOPUNROLL
+	
+rb:
+	@echo registerBlock
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_REGISTERBLOCK
+	
+omp_simd:
+	@echo openmp_simd
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD
+	
+omp_simd_cb:
+	@echo openmp_simd_cacheBlock
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK
+	
+omp_simd_cb_lu:
+	@echo openmp_simd_cacheBlock_loopUnroll
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL
+
+omp_simd_cb_lu_rb:
+	@echo openmp_simd_cacheBlock_loopnUnroll_registerBlock
+	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK
+	
+x86_testfile:
+	@$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)
+	@./make_testfile
+
+x86_basic:
+	@number=1;\
+	result=0;\
+	while [ $$number -le $(TIMES) ];do\
+			$(MAKE) -s clean;\
+			$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
+			$(MAKE) -B -s x86_flush_cache;\
+			output=$$(./main);\
+			result=$$(echo $$output + $$result | bc);\
+    		number=$$(($$number+1)); \
+    	done;\
+	result=$$(echo $$result / $(TIMES) | bc);\
+	echo $$result;
+	
+x86_flush_cache:
+	$(X86_CXX) $(X86_FLUSH_CACHE_FLAGS) $(X86_FLUSH_CACHE_FILES) 
+	./x86_flush_cache
+	
+riscv_basic:
+	@number=1;\
+	result=0;\
+	while [ $$number -le $(TIMES) ];do\
+			$(MAKE) -s clean;\
+			$(RISCV_CXX) $(RISCV_CXX_FLAGS) $(CFILES) -D $(OPT);\
+			output=$$(spike pk ./main);\
+			result=$$(echo $$output + $$result | bc);\
+    		number=$$(($$number+1)); \
+    	done;\
+	result=$$(echo $$result / $(TIMES) | bc);\
+	echo $$result;
+	
+clean:
+	rm -f main make_testfile x86_flush_cache *.o

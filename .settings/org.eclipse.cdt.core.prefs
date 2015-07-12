@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.base.1234279183/C_INCLUDE_PATH/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.1234279183/C_INCLUDE_PATH/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.1234279183/C_INCLUDE_PATH/value=/usr/lib/gcc/x86_64-linux-gnu/4.8/include\:/usr/local/include\:/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed\:/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed\:/usr/include\:/usr/include/c++/4.8\:/usr/include/x86_64-linux-gnu/c++/4.8\:/usr/include/c++/4.8/backward\:/usr/include/x86_64-linux-gnu
+environment/project/cdt.managedbuild.toolchain.gnu.base.1234279183/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.base.1234279183/appendContributed=true
