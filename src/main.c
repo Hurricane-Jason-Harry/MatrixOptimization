@@ -59,6 +59,6 @@ int main(int argc, char *argv[])
 		printf("incorrect");
 		return 0;
 	}
-	printf("%lu", time);
+	printf("%llu", time);
 	return 0;
 }
