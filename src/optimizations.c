@@ -103,13 +103,13 @@ void simd(double* restrict result,
 		}
 	}
 #elif defined __riscv
-    __asm__ volatile ("vsetcfg 16, 1\n");
+    __asm__ volatile ("vsetcfg 8, 1\n");
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int k = 0; k < WIDTH; k++)
 		{
-			volatile size_t vector_size = 1;
+			volatile int64_t vector_size;
 			__asm__ volatile ("  vmss vs1, %0": :"r"(matrix1[i*WIDTH+k]));
 			for (int j = 0; j < HEIGHT; j+=vector_size)
 			{
