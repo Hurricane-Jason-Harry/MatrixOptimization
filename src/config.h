@@ -4,8 +4,8 @@
 #define ENABLE 1
 #define DISABLE 0
 
-#define WIDTH 1024
-#define HEIGHT 1024
+#define WIDTH 256
+#define HEIGHT 256
 
 #define W1 (WIDTH)
 #define H1W2 (HEIGHT)

@@ -10,7 +10,7 @@ RISCV_CXX_FLAGS= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -S
 endif
 
 X86_CXX:=gcc
-X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -lm -o main
+X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -lm -ldl -lpthread -o main
 CFILES:=src/main.c src/optimizations.c src/utils.c src/config.c
 
 CMAKE_TEST_FILES:=src/make_test.c
@@ -63,23 +63,27 @@ omp_simd_cb_lu_rb:
 	@echo openmp_simd_cacheBlock_loopnUnroll_registerBlock
 	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK
 	
-x86_testfile:
+testfile:
 	@$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)
 	@./make_testfile
 
 x86_basic:
-	@number=1;\
-	result=0;\
-	while [ $$number -le $(TIMES) ];do\
-			$(MAKE) -s clean;\
-			$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
-			$(MAKE) -B -s x86_flush_cache;\
-			output=$$(./main);\
-			result=$$(echo $$output + $$result | bc);\
-    		number=$$(($$number+1)); \
-    	done;\
-	result=$$(echo $$result / $(TIMES) | bc);\
-	echo $$result;
+	$(MAKE) -s clean
+	$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT)
+	$(MAKE) -B -s x86_flush_cache
+	./main
+	#@number=1;\
+	#result=0;\
+	#while [ $$number -le $(TIMES) ];do\
+	#		$(MAKE) -s clean;\
+	#		$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
+	#		$(MAKE) -B -s x86_flush_cache;\
+	#		output=$$(./main);\
+	#		result=$$(echo $$output + $$result | bc);\
+    #		number=$$(($$number+1)); \
+    #	done;\
+	#result=$$(echo $$result / $(TIMES) | bc);\
+	#echo $$result;
 	
 x86_flush_cache:
 	$(X86_CXX) $(X86_FLUSH_CACHE_FLAGS) $(X86_FLUSH_CACHE_FILES) 

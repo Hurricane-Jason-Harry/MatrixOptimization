@@ -4,7 +4,6 @@
 
 #include "config.h"
 #include <errno.h>
-
 /*
  * This program generates matrices to fill its value by random double
  * precision number between 0 and 1. The matrices's size can be determined by the user.
@@ -45,11 +44,12 @@ void write_error() {
 
 int main(int argc, char **argv) {
 
-	int w1 = W1;
-	int h1w2 = H1W2;
-	int h2 = H2;
+	const int w1 = W1;
+	const int h1w2 = H1W2;
+	const int h2 = H2;
 	char* filename = TEST_FILENAME;
 
+	/*
 	if (argc >= 2)
 		w1 = strtol(argv[0], NULL, 10);
 	if (argc >= 3)
@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
 		h2 = strtol(argv[2], NULL, 10);
 	if (argc >= 5)
 		filename = argv[3];
+	*/
 
 	/* allocate memory space for two input matrices and the result matrix. */
 	double* input1 = calloc(w1*h1w2, sizeof(double));
@@ -91,9 +92,9 @@ int main(int argc, char **argv) {
 	if (!fwrite(&w1, sizeof(int), 1, file)) write_error();
 	if (!fwrite(&h1w2, sizeof(int), 1, file)) write_error();
 	if (!fwrite(&h2, sizeof(int), 1, file)) write_error();
+	if (fwrite(result, sizeof(double), w1*h2, file)<w1*h2) write_error();
 	if (fwrite(input1, sizeof(double), w1*h1w2, file)<w1*h1w2) write_error();
 	if (fwrite(input2, sizeof(double), h1w2*h2, file)<h1w2*h2) write_error();
-	if (fwrite(result, sizeof(double), w1*h2, file)<w1*h2) write_error();
 	if (fclose(file)) write_error();
 
 	free(input1);

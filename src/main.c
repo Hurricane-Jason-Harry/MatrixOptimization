@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
 	read_flag = read_matrix_dimension(TEST_FILENAME, &temp, &temp, &temp);
 	#endif
 
-	read_flag = read_matrix(TEST_FILENAME, matrix1, matrix2, result_ref);
+
+	read_flag = read_matrix(TEST_FILENAME, result_ref, matrix1, matrix2);
 	if (read_flag == 1)
 		printf("Cannot open test file\n");
 	else if (read_flag == 2)
@@ -56,9 +57,9 @@ int main(int argc, char *argv[])
 	optimize(result, matrix1, matrix2); /* run the optimization functions. */
 	uint64_t time = timestamp_us() - start;
 	if (compare_matrix(result, result_ref)) {
-		printf("incorrect");
+		printf("%lu incorrect\n", time);
 		return 0;
 	}
-	printf("%lu", time);
+	printf("%lu\n", time);
 	return 0;
 }
