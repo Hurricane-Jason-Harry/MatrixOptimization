@@ -3,7 +3,11 @@ TIMES:=1
 endif
 
 RISCV_CXX:=riscv64-unknown-elf-gcc
-RISCV_CXX_FLAGS:= -Wall -O3 -march=RV64IMAFDXhwacha -std=c99 -lm -o main
+RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -o main
+
+ifdef ASSEM
+RISCV_CXX_FLAGS= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -S
+endif
 
 X86_CXX:=gcc
 X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -lm -o main
@@ -82,17 +86,9 @@ x86_flush_cache:
 	./x86_flush_cache
 	
 riscv_basic:
-	@number=1;\
-	result=0;\
-	while [ $$number -le $(TIMES) ];do\
-			$(MAKE) -s clean;\
-			$(RISCV_CXX) $(RISCV_CXX_FLAGS) $(CFILES) -D $(OPT);\
-			output=$$(spike --isa=RV64IMAFDXhwacha pk ./main);\
-			result=$$(echo $$output + $$result | bc);\
-    		number=$$(($$number+1)); \
-    	done;\
-	result=$$(echo $$result / $(TIMES) | bc);\
-	echo $$result;
+	$(MAKE) -s clean
+	$(RISCV_CXX) $(RISCV_CXX_FLAGS) $(CFILES) -D $(OPT)
+	spike --isa=RV64IMAFDXhwacha pk ./main
 	
 clean:
 	rm -f main make_testfile x86_flush_cache *.o

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #ifdef __AVX2__
 #include <xmmintrin.h>
@@ -73,6 +74,15 @@ void openmp(double* restrict result,
 }
 
 
+void __riscv_simd(void);
+__asm__ (
+		".align 3\n"
+		"__riscv_simd:\n"
+		"  vld vv0, va0\n"
+		"  vld vv1, va1\n"
+		"  vfmadd.d vv1, vs1, vv0, vv1\n"
+		"  vsd vv1, va1\n"
+		"  vstop\n");
 
 void simd(double* restrict result,
 		const double* restrict matrix1, const double* restrict matrix2) {
@@ -92,16 +102,37 @@ void simd(double* restrict result,
 		}
 	}
 #elif defined __riscv
-	const int SIZE = 64;
-    volatile unsigned int vector_length = 1;
-    __asm__ volatile (
-        "vsetcfg 16, 1\n"
-        "vsetvl %0, %1\n"
-        : "=r"(vector_length)
-        : "r"(SIZE)
-        );
-    // printf("hello?\n");
-    // printf("%d\n", vector_length);
+    __asm__ volatile ("vsetcfg 16, 1\n");
+	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
+	for (int i = 0; i < WIDTH; i++)
+	{
+		for (int k = 0; k < WIDTH; k++)
+		{
+			int64_t src1 = matrix1[i*WIDTH+k];
+			volatile size_t vector_size = 1;
+			__asm__ volatile ("  vmss vs1, %0": :"r"(src1));
+			for (int j = 0; j < HEIGHT*8; j += vector_size)
+			{
+				const double* dest = result+i*WIDTH+j/8;
+				const double* src2 = matrix2+k*WIDTH+j/8;
+				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT*8-j));
+				__asm__ volatile ("  vmsa va0, %0"::"r"(src2));
+				__asm__ volatile ("  vmsa va1, %0"::"r"(dest));
+				//__asm__ volatile ("  fence\n");
+
+				__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
+
+				//__asm__ volatile (
+
+				//		);
+				//__m256d r = _mm256_load_pd(result+i*WIDTH+j);
+				//r = _mm256_fmadd_pd(_mm256_load_pd(matrix2+k*WIDTH+j), t, r);
+				//_mm256_store_pd(result+i*WIDTH+j, r);
+
+
+			}
+		}
+	}
 	#endif
 }
 

@@ -86,15 +86,15 @@ main:
 	ld	s1,8(sp)
 	call	compare_matrix
 	bnez	a0,.L21
-	li	a5,999424
-	add	a5,a5,576
-	mul	a1,s0,a5
+	li	a1,999424
+	add	a1,a1,576
+	mul	s0,s0,a1
 	lui	a0,%hi(.LC5)
 	add	a0,a0,%lo(.LC5)
-	mul	s2,s2,a5
-	add	a1,a1,s1
-	add	s2,s2,s3
-	sub	a1,a1,s2
+	mul	a1,s2,a1
+	add	s0,s0,s1
+	sub	a1,s0,a1
+	sub	a1,a1,s3
 	call	printf
 .L7:
 	ld	ra,56(sp)
@@ -156,5 +156,5 @@ main:
 	.string	"incorrect"
 	.zero	6
 .LC5:
-	.string	"%lld"
+	.string	"%lu"
 	.ident	"GCC: (GNU) 5.1.0"

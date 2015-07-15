@@ -1,11 +1,15 @@
 	.file	"optimizations.c"
+ #APP
+	.align 3
+__riscv_simd:
+  vld vv0, va0
+  vld vv1, va1
+  vfmadd.d vv1, vs1, vv0, vv1
+  vsd vv1, va1
+  vstop
+
+ #NO_APP
 	.text
-	.align	2
-	.globl	optimize
-	.type	optimize, @function
-optimize:
-	ret
-	.size	optimize, .-optimize
 	.align	2
 	.globl	naive
 	.type	naive, @function
@@ -28,15 +32,15 @@ naive:
 	add	a1,s0,a7
 	add	s1,s3,s1
 	li	t0,-8192
-.L3:
+.L2:
 	add	a2,a1,t0
 	mv	a0,s2
 	add	a3,a6,a7
-.L5:
+.L4:
 	fld	ft2,0(a2)
 	mv	a4,a0
 	mv	a5,a6
-.L4:
+.L3:
 	fld	ft0,0(a4)
 	fld	ft1,0(a5)
 	add	a5,a5,8
@@ -44,14 +48,14 @@ naive:
 	add	a4,a4,8
 	fadd.d	ft0,ft1,ft0
 	fsd	ft0,-8(a5)
-	bne	a3,a5,.L4
+	bne	a3,a5,.L3
 	add	a2,a2,8
 	add	a0,a0,a7
-	bne	a2,a1,.L5
+	bne	a2,a1,.L4
 	li	a1,8192
 	add	a1,a2,a1
 	mv	a6,a3
-	bne	a3,s1,.L3
+	bne	a3,s1,.L2
 	ld	ra,40(sp)
 	ld	s0,32(sp)
 	ld	s1,24(sp)
@@ -70,8 +74,96 @@ openmp:
 	.globl	simd
 	.type	simd, @function
 simd:
-	ret
+	add	sp,sp,-48
+	sd	s0,32(sp)
+	sd	s1,24(sp)
+	sd	s2,16(sp)
+	sd	ra,40(sp)
+	mv	s1,a0
+	mv	s2,a1
+	mv	s0,a2
+ #APP
+# 105 "src/optimizations.c" 1
+	vsetcfg 16, 1
+
+# 0 "" 2
+ #NO_APP
+	mv	a1,zero
+	li	a2,8388608
+	call	memset
+	lui	t0,%hi(__riscv_simd)
+	mv	a1,s2
+	mv	a7,zero
+	add	t0,t0,%lo(__riscv_simd)
+	li	a0,8192
+	li	t2,1048576
+	li	t3,8192
+.L12:
+	mv	t1,a1
+	mv	a6,zero
+.L14:
+	ld	a5,0(t1)
+ #APP
+# 113 "src/optimizations.c" 1
+	  vmss vs1, a5
+# 0 "" 2
+ #NO_APP
+	mv	a4,zero
+.L13:
+	sraw	a5,a4,31
+	srlw	a5,a5,29
+	addw	a5,a5,a4
+	sraw	a5,a5,3
+	subw	a2,a0,a4
+ #APP
+# 118 "src/optimizations.c" 1
+	  vsetvl a2, a2
+
+# 0 "" 2
+ #NO_APP
+	add	a3,a5,a6
+	sll	a3,a3,3
+	sd	a2,8(sp)
+	add	a3,s0,a3
+ #APP
+# 119 "src/optimizations.c" 1
+	  vmsa va0, a3
+# 0 "" 2
+ #NO_APP
+	add	a5,a5,a7
+	sll	a5,a5,3
+	add	a5,s1,a5
+ #APP
+# 120 "src/optimizations.c" 1
+	  vmsa va1, a5
+# 0 "" 2
+# 122 "src/optimizations.c" 1
+	vf 0(t0)
+
+# 0 "" 2
+ #NO_APP
+	ld	a5,8(sp)
+	addw	a4,a5,a4
+	blt	a4,a0,.L13
+	add	a6,a6,1024
+	add	t1,t1,8
+	bne	a6,t2,.L14
+	add	a7,a7,1024
+	add	a1,a1,t3
+	bne	a7,a6,.L12
+	ld	ra,40(sp)
+	ld	s0,32(sp)
+	ld	s1,24(sp)
+	ld	s2,16(sp)
+	add	sp,sp,48
+	jr	ra
 	.size	simd, .-simd
+	.align	2
+	.globl	optimize
+	.type	optimize, @function
+optimize:
+	tail	simd
+	.size	optimize, .-optimize
 	.align	2
 	.globl	cacheBlock
 	.type	cacheBlock, @function
@@ -96,19 +188,19 @@ cacheBlock:
 	li	t0,8192
 	li	t4,4194304
 	mv	t1,a5
-.L14:
+.L21:
 	mv	a7,s1
 	mv	a6,a1
 	add	s0,s2,t2
-.L19:
+.L26:
 	add	a2,a6,t5
 	mv	a0,s0
 	add	a3,a7,t0
-.L16:
+.L23:
 	fld	ft2,0(a2)
 	mv	a4,a0
 	mv	a5,a7
-.L15:
+.L22:
 	fld	ft0,0(a4)
 	fld	ft1,0(a5)
 	add	a5,a5,8
@@ -116,17 +208,17 @@ cacheBlock:
 	add	a4,a4,8
 	fadd.d	ft0,ft1,ft0
 	fsd	ft0,-8(a5)
-	bne	a3,a5,.L15
+	bne	a3,a5,.L22
 	add	a2,a2,8
 	add	a0,a0,t0
-	bne	a6,a2,.L16
+	bne	a6,a2,.L23
 	li	a5,8192
 	add	a6,a6,a5
 	mv	a7,a3
-	bne	t6,a3,.L19
+	bne	t6,a3,.L26
 	add	t2,t2,t4
 	add	a1,a1,t1
-	bne	t2,t3,.L14
+	bne	t2,t3,.L21
 	ld	ra,24(sp)
 	ld	s0,16(sp)
 	ld	s1,8(sp)
@@ -162,15 +254,15 @@ loopUnroll:
 	li	t2,-8192
 	li	a2,1024
 	mv	t1,t0
-.L26:
+.L33:
 	add	a0,a1,t2
 	mv	a6,s2
-.L25:
+.L32:
 	fld	ft0,0(a0)
 	mv	a4,a6
 	mv	a5,a7
 	mv	a3,zero
-.L24:
+.L31:
 	fld	fs1,0(a4)
 	fld	ft11,8(a4)
 	fld	ft9,16(a4)
@@ -334,13 +426,13 @@ loopUnroll:
 	fsd	ft1,248(a5)
 	add	a4,a4,256
 	add	a5,a5,256
-	bne	a3,a2,.L24
+	bne	a3,a2,.L31
 	add	a0,a0,8
 	add	a6,a6,t0
-	bne	a0,a1,.L25
+	bne	a0,a1,.L32
 	add	a7,a7,t1
 	add	a1,a0,t1
-	bne	a7,s1,.L26
+	bne	a7,s1,.L33
 	ld	ra,72(sp)
 	ld	s0,64(sp)
 	ld	s1,56(sp)
@@ -376,10 +468,10 @@ registerBlock:
 	li	t2,-8192
 	li	t4,16384
 	li	t3,32768
-.L34:
+.L41:
 	add	a7,a1,t2
 	add	a6,s2,t0
-.L33:
+.L40:
 	fld	fa7,0(a7)
 	fld	fa6,8(a7)
 	fld	fa5,16(a7)
@@ -389,7 +481,7 @@ registerBlock:
 	add	a2,a6,t4
 	mv	a3,a6
 	mv	a5,t1
-.L32:
+.L39:
 	fld	ft0,0(a4)
 	fld	ft6,8(a4)
 	fld	ft4,16(a4)
@@ -451,13 +543,13 @@ registerBlock:
 	add	a5,a5,32
 	add	a0,a0,32
 	add	a2,a2,32
-	bne	a6,a4,.L32
+	bne	a6,a4,.L39
 	add	a7,a7,32
 	add	a6,a6,t3
-	bne	a7,a1,.L33
+	bne	a7,a1,.L40
 	add	t1,t1,t0
 	add	a1,a7,t0
-	bne	t1,s1,.L34
+	bne	t1,s1,.L41
 	ld	ra,40(sp)
 	ld	s0,32(sp)
 	ld	s1,24(sp)
