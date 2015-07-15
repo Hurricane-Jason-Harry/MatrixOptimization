@@ -103,7 +103,7 @@ void simd(double* restrict result,
 		}
 	}
 #elif defined __riscv
-    __asm__ volatile ("vsetcfg 8, 1\n");
+    __asm__ volatile ("vsetcfg 2, 1\n");
 	memset(result, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
 	{
