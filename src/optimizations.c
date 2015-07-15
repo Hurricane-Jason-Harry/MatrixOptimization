@@ -118,7 +118,6 @@ void simd(double* restrict result,
 				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
 				__asm__ volatile ("  vmsa va0, %0"::"r"(src2));
 				__asm__ volatile ("  vmsa va1, %0"::"r"(dest));
-				__asm__ volatile ("  fence\n");
 				__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
 			}
 		}
