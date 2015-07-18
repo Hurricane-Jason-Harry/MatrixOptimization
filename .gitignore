@@ -3,4 +3,11 @@ test/*
 main
 .DS_Store
 *.gch
+x86_flush_cache
+.cproject
+.gitignore
+.project
+.settings/language.settings.xml
+.settings/org.eclipse.cdt.core.prefs
+
 
