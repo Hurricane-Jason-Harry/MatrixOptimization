@@ -3,25 +3,25 @@
 
 void optimize(double* r, const double* m1, const double* m2);
 
-void naive(double* r,
+void matmul_naive(double* r,
 		const double* m1, const double* m2);
 
-void openmp(double* r, const double* m1, const double* m2);
+void matmul_omp(double* r, const double* m1, const double* m2);
 
-void simd(double* r, const double* m1, const double* m2);
+void matmul_simd(double* r, const double* m1, const double* m2);
 
-void cacheBlock(double* r, const double* m1, const double* m2);
+void matmul_cb(double* r, const double* m1, const double* m2);
 
-void loopUnroll(double* r, const double* m1, const double* m2);
+void matmul_lu(double* r, const double* m1, const double* m2);
 
-void registerBlock(double* r, const double* m1, const double* m2);
+void matmul_rb(double* r, const double* m1, const double* m2);
 
-void openmp_simd(double* r, const double* m1, const double* m2);
+void matmul_omp_simd(double* r, const double* m1, const double* m2);
 
-void openmp_simd_cacheBlock(double* r, const double* m1, const double* m2);
+void matmul_omp_simd_cb(double* r, const double* m1, const double* m2);
 
-void openmp_simd_cacheBlock_loopUnroll(double* r, const double* m1, const double* m2);
+void malmul_omp_simd_cb_lu(double* r, const double* m1, const double* m2);
 
-void openmp_simd_cacheBlock_loopUnroll_registerBlock(double* r, const double* m1, const double* m2);
+void matmul_omp_simd_cb_lu_rb(double* r, const double* m1, const double* m2);
 
 #endif

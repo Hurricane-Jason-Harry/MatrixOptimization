@@ -3,14 +3,15 @@ TIMES:=1
 endif
 
 RISCV_CXX:=riscv64-unknown-elf-gcc
-RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -o main
+RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -B /usr/include -std=c99 -lm -o main
 
+RISCV_SPIKE:= spike --l2=512:8:64 --isa=RV64IMAFDXhwacha pk -c 
 ifdef ASSEM
 RISCV_CXX_FLAGS= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -S
 endif
 
 X86_CXX:=gcc
-X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O1 -std=c99 -fopenmp -lm -ldl -lpthread -o main
+X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O2 -std=c99 -fopenmp -lm -ldl -lpthread -o main
 CFILES:=src/main.c src/optimizations.c src/utils.c src/config.c
 
 CMAKE_TEST_FILES:=src/make_test.c
@@ -19,7 +20,7 @@ MAKE_TEST_FLAGS:= -Wall -std=c99 -lm -o make_testfile
 X86_FLUSH_CACHE_FILES:=src/x86_flush_cache.c
 X86_FLUSH_CACHE_FLAGS:= -Wall -std=c99 -O0 -fopenmp -o x86_flush_cache
 OPT:=_OP_NAIVE
-
+	
 all: naive omp simd cb lu rb omp_simd omp_simd_cb \
      omp_simd_cb_lu omp_simd_cb_lu_rb
 		 
@@ -64,26 +65,15 @@ omp_simd_cb_lu_rb:
 	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK
 	
 testfile:
-	@$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)
-	@./make_testfile
+	$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)
+	./make_testfile
 
 x86_basic:
 	$(MAKE) -s clean
 	$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT)
-	$(MAKE) -B -s x86_flush_cache
-	./main
-	#@number=1;\
-	#result=0;\
-	#while [ $$number -le $(TIMES) ];do\
-	#		$(MAKE) -s clean;\
-	#		$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
-	#		$(MAKE) -B -s x86_flush_cache;\
-	#		output=$$(./main);\
-	#		result=$$(echo $$output + $$result | bc);\
-    #		number=$$(($$number+1)); \
-    #	done;\
-	#result=$$(echo $$result / $(TIMES) | bc);\
-	#echo $$result;
+	$(MAKE) x86_flush_cache
+	$(foreach num,$(shell seq 1 $(TIMES)), ./main;)
+
 	
 x86_flush_cache:
 	$(X86_CXX) $(X86_FLUSH_CACHE_FLAGS) $(X86_FLUSH_CACHE_FILES) 
@@ -92,7 +82,20 @@ x86_flush_cache:
 riscv_basic:
 	$(MAKE) -s clean
 	$(RISCV_CXX) $(RISCV_CXX_FLAGS) $(CFILES) -D $(OPT)
-	spike --isa=RV64IMAFDXhwacha pk ./main
+	$(RISCV_SPIKE) ./main
 	
 clean:
 	rm -f main make_testfile x86_flush_cache *.o
+
+#@number=1;\
+#result=0;\
+#while [ $$number -le $(TIMES) ];do\
+#		$(MAKE) -s clean;\
+#		$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
+#		$(MAKE) -B -s x86_flush_cache;\
+#		output=$$(./main);\
+#		result=$$(echo $$output + $$result | bc);\
+#		number=$$(($$number+1)); \
+#	done;\
+#result=$$(echo $$result / $(TIMES) | bc);\
+#echo $$result;
