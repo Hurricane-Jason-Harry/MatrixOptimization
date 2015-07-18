@@ -42,7 +42,7 @@ void optimize(double* prod, const double* matA, const double* matB) {
 	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK)
 		matmul_omp_simd_cb(prod, matA, matB);
 	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL)
-		malmul_omp_simd_cb_lu(prod, matA, matB);
+		matmul_omp_simd_cb_lu(prod, matA, matB);
 	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK)
 		matmul_omp_simd_cb_lu_rb(prod, matA, matB);
 	#endif

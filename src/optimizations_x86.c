@@ -174,7 +174,7 @@ void matmul_omp_simd_cb(double* restrict prod,
 }
 
 // Matrix Multiply openmp simd cacheBlock loopUnroll
-void malmul_omp_simd_cb_lu(double* restrict prod,
+void matmul_omp_simd_cb_lu(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
 	const int CACHE_BLOCK = 32;
 	#define UNROLL_COUNT 8
