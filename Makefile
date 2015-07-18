@@ -3,7 +3,7 @@ TIMES:=1
 endif
 
 RISCV_CXX:=riscv64-unknown-elf-gcc
-RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -B /usr/include -std=c99 -lm -o main
+RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -Wno-format -mhwacha4  -B /usr/include -std=c99 -lm -o main
 
 RISCV_SPIKE:= spike --l2=512:8:64 --isa=RV64IMAFDXhwacha pk -c 
 ifdef ASSEM
@@ -11,7 +11,7 @@ RISCV_CXX_FLAGS= -Wall -O2 -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -S
 endif
 
 X86_CXX:=gcc
-X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O2 -std=c99 -fopenmp -lm -ldl -lpthread -o main
+X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O2 -std=c99 -Wno-format -fopenmp -lm -ldl -lpthread -o main
 CFILES:=src/main.c src/optimizations.c src/utils.c src/config.c
 
 CMAKE_TEST_FILES:=src/make_test.c

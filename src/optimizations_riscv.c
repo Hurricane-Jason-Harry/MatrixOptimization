@@ -1,60 +1,14 @@
+#ifdef __riscv
+
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 
-#ifdef __AVX2__
-#include <xmmintrin.h>
-#include <immintrin.h>
-#include <x86intrin.h>
-#else
 #include "mm_malloc.h"
-#endif
 
 #include "config.h"
 #include "optimizations.h"
 #include "boost.h"
-
-void optimize(double* prod, const double* matA, const double* matB) {
-	#ifdef _OP_NAIVE
-		matmul_naive(prod, matA, matB);
-	#elif defined (_OP_OPENMP)
-		matmul_omp(product, matA, matB);
-	#elif defined (_OP_SIMD)
-		matmul_simd(prod, matA, matB);
-	#elif defined (_OP_CACHEBLOCK)
-		matmul_cb(prod, matA, matB);
-	#elif defined (_OP_LOOPUNROLL)
-		matmul_lu(prod, matA, matB);
-	#elif defined (_OP_REGISTERBLOCK)
-		matmul_rb(prod, matA, matB);
-	#elif defined (_OP_OPENMP_SIMD)
-		matmul_omp_simd(prod, matA, matB);
-	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK)
-		matmul_omp_simd_cb(prod, matA, matB);
-	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL)
-		malmul_omp_simd_cb_lu(prod, matA, matB);
-	#elif defined (_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK)
-		matmul_omp_simd_cb_lu_rb(prod, matA, matB);
-	#endif
-}
-
-void matmul_naive(double* restrict prod,
-		const double* restrict matA, const double* restrict matB) {
-	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = 0; k < WIDTH; k++)
-		{
-			double scalarA = matA[i*WIDTH+k];
-			for (int j = 0; j < HEIGHT; j++)
-			{
-				prod[i*WIDTH+j] += scalarA*matB[k*WIDTH+j];
-			}
-		}
-	}
-}
-
 
 void matmul_omp(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
@@ -75,38 +29,10 @@ void matmul_omp(double* restrict prod,
 #endif
 }
 
-#ifdef __riscv
-void __riscv_simd(void);
-__asm__ (
-		".align 3\n"
-		"__riscv_simd:\n"
-		"  vld vv0, va0\n"
-		"  vld vv1, va1\n"
-		"  vfmadd.d vv1, vs1, vv0, vv1\n"
-		"  vsd vv1, va1\n"
-		"  vstop\n");
-#endif
 
+void __riscv_simd(void);
 void matmul_simd(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	#ifdef __AVX2__
-	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = 0; k < WIDTH; k++)
-		{
-			__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-			for (int j = 0; j < HEIGHT; j+=4)
-			{
-				__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
-				__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
-				vecP = _mm256_fmadd_pd(scalarA, vecB,  vecP);
-				_mm256_store_pd(prod+i*WIDTH+j, vecP);
-			}
-		}
-	}
-
-#elif defined __riscv
     __asm__ volatile ("vsetcfg 2, 1\n");
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
@@ -124,18 +50,22 @@ void matmul_simd(double* restrict prod,
 			}
 		}
 	}
-	#endif
 }
+
+// __riscv_simd
+__asm__ (
+		".align 3\n"
+		"__riscv_simd:\n"
+		"  vld vv0, va0\n"
+		"  vld vv1, va1\n"
+		"  vfmadd.d vv1, vs1, vv0, vv1\n"
+		"  vsd vv1, va1\n"
+		"  vstop\n");
 
 // Matrix Multiply cacheBlock
 void matmul_cb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-
-#ifdef __AVX2__
-	const int CACHE_BLOCK = 512;
-#elif defined __riscv
 	const int CACHE_BLOCK = 32;
-#endif
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 
 	for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK) {
@@ -211,93 +141,108 @@ void matmul_rb(double* restrict prod,
 // Matrix Multiply openmp simd
 void matmul_omp_simd(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-#ifdef __AVX2__
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-
-	#pragma omp parallel for
+    __asm__ volatile ("vsetcfg 2, 1\n");
+	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
+	//#pragma omp parallel for
 	for (int i = 0; i < WIDTH; i++)
 	{
 		for (int k = 0; k < WIDTH; k++)
 		{
-			__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-			for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH)
+			volatile int64_t vector_size;
+			__asm__ volatile ("  vmss vs1, %0": :"r"(matA[i*WIDTH+k]));
+			for (int j = 0; j < HEIGHT; j+= vector_size)
 			{
-				__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
-				__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
-				vecP = _mm256_fmadd_pd(scalarA, vecB,  vecP);
-				_mm256_store_pd(prod+i*WIDTH+j, vecP);
+				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
+				__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
+				__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
+				__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
 			}
 		}
 	}
-#endif
 }
 
 // Matrix Multiply openmp simd cacheBlock
 void matmul_omp_simd_cb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-#ifdef __AVX2__
 	const int CACHE_BLOCK = 32;
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-
-	#pragma omp parallel
+    __asm__ volatile ("vsetcfg 2, 1\n");
+	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
+//#pragma omp parallel
+//{
+	for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK)
 	{
-		for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK) {
-			#pragma omp for
-			for (int i = 0; i < WIDTH; i++)
+		//#pragma omp parallel for
+		for (int i = 0; i < WIDTH; i++)
+		{
+			for (int k = kk; k < kk+CACHE_BLOCK; k++)
 			{
-				for (int k = kk; k < kk+CACHE_BLOCK; k++)
+				volatile int64_t vector_size;
+				__asm__ volatile ("  vmss vs1, %0": :"r"(matA[i*WIDTH+k]));
+				for (int j = 0; j < HEIGHT; j+= vector_size)
 				{
-					__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-					for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH)
-					{
-						__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
-						__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
-						vecP = _mm256_fmadd_pd(scalarA, vecB,  vecP);
-						_mm256_store_pd(prod+i*WIDTH+j, vecP);
-					}
+					__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
+					__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
+					__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
+					__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
 				}
 			}
 		}
 	}
-#endif
+//}
 }
 
+void __riscv_omp_simd_cb_lu();
 // Matrix Multiply openmp simd cacheBlock loopUnroll
 void malmul_omp_simd_cb_lu(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-#ifdef __AVX2__
 	const int CACHE_BLOCK = 32;
 	#define UNROLL_COUNT 8
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-
-	#pragma omp parallel
+    __asm__ volatile ("vsetcfg 2, 1\n");
+//#pragma omp parallel
+//{
+	for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK)
 	{
-		for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK) {
-			#pragma omp for
-			for (int i = 0; i < WIDTH; i++)
+		//#pragma omp parallel for
+		for (int i = 0; i < WIDTH; i++)
+		{
+			for (int k = kk; k < kk+CACHE_BLOCK; k+=UNROLL_COUNT)
 			{
-				for (int k = kk; k < kk+CACHE_BLOCK; k++)
+				volatile int64_t vector_size;
+				#define CODE1(n) __asm__ volatile ("  vmss vs"#n", %0": :"r"(matA[i*WIDTH+k+n-1]));
+				UNROLLZ(CODE1, 1, UNROLL_COUNT)
+				for (int j = 0; j < HEIGHT; j+= vector_size)
 				{
-					__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-					for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH*UNROLL_COUNT)
-					{
-						__m256d vecB, vecP;
-						#define CODE(n) vecP = _mm256_load_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH);\
-								vecB = _mm256_load_pd(matB+k*WIDTH+j+n*X86_VECTOR_LENGTH);\
-								vecP = _mm256_fmadd_pd(scalarA, vecB, vecP);\
-								_mm256_store_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH, vecP);
-
-						UNROLL(CODE, UNROLL_COUNT)
-
-						#undef CODE
-					}
+					__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
+					__asm__ volatile ("  vmsa va0, %0"::"r"(prod+i*WIDTH+j));
+					#define CODE2(n) __asm__ volatile ("  vmsa va"#n", %0"::"r"(matB+k*WIDTH+j+WIDTH*(n-1)));
+					UNROLLZ(CODE2, 1, UNROLL_COUNT)
+					__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_omp_simd_cb_lu):"memory");
 				}
 			}
 		}
 	}
-	#undef UNROLL_COUNT
-#endif
+
 }
+
+// __riscv_omp_simd_cb_lu
+__asm__ (
+		".align 3\n"
+		"__riscv_omp_simd_cb_lu:\n"
+		"  vld vv0, va0\n");
+#define CODE3(n) __asm__ (		"  vld vv1, va"#n"\n" \
+								"  vfmadd.d vv0, vs"#n", vv1, vv0\n");
+UNROLLZ(CODE3, 1, UNROLL_COUNT)
+__asm__ (
+		"  vsd vv0, va0\n"
+		"  vstop\n");
+
+#undef UNROLL_COUNT
+#undef CODE1
+#undef CODE2
+#undef CODE3
 
 // Matrix Multiply openmp simd cacheBlock loopUnroll registerBlock
 void matmul_omp_simd_cb_lu_rb(double* restrict prod,
@@ -345,3 +290,5 @@ void matmul_omp_simd_cb_lu_rb(double* restrict prod,
 	#undef REG_BLOCK2
 #endif
 }
+
+#endif
