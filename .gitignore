@@ -1,0 +1,6 @@
+test/*
+*.s
+main
+.DS_Store
+*.gch
+
