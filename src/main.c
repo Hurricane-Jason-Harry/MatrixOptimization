@@ -8,42 +8,25 @@
  ============================================================================
  */
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <sys/time.h>
-#include <time.h>
-#include <string.h>
+
+#ifdef __AVX2__
+#include <xmmintrin.h>
+#else
+#include "mm_malloc.h"
+#endif
 
 #include "config.h"
 #include "optimizations.h"
 #include "utils.h"
 
-#ifdef __AVX2__
-#include <omp.h>
-#include <xmmintrin.h>
-#include <immintrin.h>
-#include <x86intrin.h>
-#else
-#include "mm_malloc.h"
-#endif
-
 int main(int argc, char *argv[])
 {
-	double* matrix1 = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-	double* matrix2 = _mm_malloc((WIDTH*HEIGHT)*sizeof(double), 64);
-	double* result = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-	double* result_ref = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
-	int read_flag;
+	double* matA = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+	double* matB = _mm_malloc((WIDTH*HEIGHT)*sizeof(double), 64);
+	double* prod = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
+	double* prod_ref = _mm_malloc(WIDTH*HEIGHT*sizeof(double), 64);
 
-	#ifndef OP_CONSTANT_DIMENSION
-	read_flag = read_matrix_dimension(TEST_FILENAME, &w1, &w2h1, &h2);
-	#else
-	int temp;
-	read_flag = read_matrix_dimension(TEST_FILENAME, &temp, &temp, &temp);
-	#endif
-
-
-	read_flag = read_matrix(TEST_FILENAME, result_ref, matrix1, matrix2);
+	int read_flag = read_matrix(TEST_FILENAME, prod_ref, matA, matB);
 	if (read_flag == 1)
 		printf("Cannot open test file\n");
 	else if (read_flag == 2)
@@ -54,12 +37,17 @@ int main(int argc, char *argv[])
 		return 0;
 
 	uint64_t start = timestamp_us();
-	optimize(result, matrix1, matrix2); /* run the optimization functions. */
+	matmul_optimize(prod, matA, matB); /* run the optimization functions. */
 	uint64_t time = timestamp_us() - start;
-	if (compare_matrix(result, result_ref)) {
+
+	if (compare_matrix(prod, prod_ref)) {
 		printf("%lu incorrect\n", time);
-		return 0;
+	} else {
+		printf("%lu\n", time);
 	}
-	printf("%lu\n", time);
+	_mm_free(prod_ref);
+	_mm_free(prod);
+	_mm_free(matB);
+	_mm_free(matA);
 	return 0;
 }

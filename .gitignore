@@ -4,5 +4,6 @@ main
 .DS_Store
 *.gch
 x86_flush_cache
+make_testfile
 
 

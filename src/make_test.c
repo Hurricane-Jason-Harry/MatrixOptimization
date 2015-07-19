@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <errno.h>
 
 #include "config.h"
-#include <errno.h>
 /*
  * This program generates matrices to fill its value by random double
  * precision number between 0 and 1. The matrices's size can be determined by the user.
@@ -61,17 +61,17 @@ int main(int argc, char **argv) {
 	*/
 
 	/* allocate memory space for two input matrices and the result matrix. */
-	double* input1 = calloc(w1*h1w2, sizeof(double));
-	double* input2 = calloc(h1w2*h2, sizeof(double));
-	double* result = calloc(w1*h2, sizeof(double));
+	double* matA = calloc(w1*h1w2, sizeof(double));
+	double* matB = calloc(h1w2*h2, sizeof(double));
+	double* prod = calloc(w1*h2, sizeof(double));
 	srand(time(0));
 
 	for (int i = 0; i < w1*h1w2; i++) {
-		input1[i] = rand()/((double)RAND_MAX);
+		matA[i] = rand()/((double)RAND_MAX);
 	}
 
 	for (int i = 0; i < w1*h1w2; i++) {
-		input2[i] = rand()/((double)RAND_MAX);
+		matB[i] = rand()/((double)RAND_MAX);
 	}
 
 	/* calculate the result matrix */
@@ -79,10 +79,10 @@ int main(int argc, char **argv) {
 	{
 		for (int k = 0; k < h2; k++)
 		{
-			double t = input1[i*w1+k];
+			double t = matA[i*w1+k];
 			for (int j = 0; j < h2; j++)
 			{
-				result[i*w1+j] += t*input2[k*h1w2+j];
+				prod[i*w1+j] += t*matB[k*h1w2+j];
 			}
 		}
 	}
@@ -92,13 +92,13 @@ int main(int argc, char **argv) {
 	if (!fwrite(&w1, sizeof(int), 1, file)) write_error();
 	if (!fwrite(&h1w2, sizeof(int), 1, file)) write_error();
 	if (!fwrite(&h2, sizeof(int), 1, file)) write_error();
-	if (fwrite(result, sizeof(double), w1*h2, file)<w1*h2) write_error();
-	if (fwrite(input1, sizeof(double), w1*h1w2, file)<w1*h1w2) write_error();
-	if (fwrite(input2, sizeof(double), h1w2*h2, file)<h1w2*h2) write_error();
+	if (fwrite(prod, sizeof(double), w1*h2, file)<w1*h2) write_error();
+	if (fwrite(matA, sizeof(double), w1*h1w2, file)<w1*h1w2) write_error();
+	if (fwrite(matB, sizeof(double), h1w2*h2, file)<h1w2*h2) write_error();
 	if (fclose(file)) write_error();
 
-	free(input1);
-	free(input2);
-	free(result);
+	free(matA);
+	free(matB);
+	free(prod);
 	return EXIT_SUCCESS;
 }

@@ -2,12 +2,9 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <stdint.h>
 
 #include "mm_malloc.h"
-
 #include "config.h"
-#include "optimizations.h"
 #include "boost.h"
 
 void matmul_omp(double* restrict prod,

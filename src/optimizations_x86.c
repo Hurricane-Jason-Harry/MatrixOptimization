@@ -1,14 +1,11 @@
 #ifdef __AVX2__
+
 #include <string.h>
 #include <stdio.h>
-#include <stdint.h>
-
 #include <xmmintrin.h>
 #include <immintrin.h>
-#include <x86intrin.h>
 
 #include "config.h"
-#include "optimizations.h"
 #include "boost.h"
 
 void matmul_omp(double* restrict prod,

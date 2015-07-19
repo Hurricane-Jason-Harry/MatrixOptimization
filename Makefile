@@ -3,7 +3,7 @@ TIMES:=1
 endif
 
 RISCV_CXX:=riscv64-unknown-elf-gcc
-RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -Wno-format -mhwacha4  -B /usr/include -std=c99 -lm -o main
+RISCV_CXX_FLAGS:= -Wall -O2 -march=RV64IMAFDXhwacha -Wno-format -mhwacha4 -std=c99 -lm -o main
 
 RISCV_SPIKE:= spike --l2=512:8:64 --isa=RV64IMAFDXhwacha pk -c 
 ifdef ASSEM
@@ -12,7 +12,7 @@ endif
 
 X86_CXX:=gcc
 X86_CXX_FLAGS:=-Wall -mavx2 -mfma -O2 -std=c99 -Wno-format -fopenmp -lm -ldl -lpthread -o main
-CFILES:=src/main.c src/optimizations.c src/utils.c src/config.c
+CFILES:=src/main.c src/optimizations.c src/utils.c
 
 CMAKE_TEST_FILES:=src/make_test.c
 MAKE_TEST_FLAGS:= -Wall -std=c99 -lm -o make_testfile
@@ -26,43 +26,43 @@ all: naive omp simd cb lu rb omp_simd omp_simd_cb \
 		 
 naive:
 	@echo naive:
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_NAIVE
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_NAIVE
 	
 omp:
 	@echo openmp:
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP
 	
 simd:
 	@echo simd:
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_SIMD
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_SIMD
 	
 cb:
 	@echo cacheBlock
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_CACHEBLOCK
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_CB
 
 lu:
 	@echo loopUnroll
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_LOOPUNROLL
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_LU
 	
 rb:
 	@echo registerBlock
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_REGISTERBLOCK
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_RB
 	
 omp_simd:
 	@echo openmp_simd
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD
 	
 omp_simd_cb:
 	@echo openmp_simd_cacheBlock
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB
 	
 omp_simd_cb_lu:
 	@echo openmp_simd_cacheBlock_loopUnroll
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB_LU
 
 omp_simd_cb_lu_rb:
 	@echo openmp_simd_cacheBlock_loopnUnroll_registerBlock
-	@$(MAKE) -s $(ISA)_basic OPT=_OP_OPENMP_SIMD_CACHEBLOCK_LOOPUNROLL_REGISTERBLOCK
+	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB_LU_RB
 	
 testfile:
 	$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)

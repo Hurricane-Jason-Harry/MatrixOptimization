@@ -16,18 +16,4 @@
 
 #define TEST_FILENAME "test/test.out"
 
-#define LINE_SIZE 64
-#define L1_SIZE (32*1024)
-#define L2_SIZE (256*1024)
-#define L3_SIZE (6144*1024)
-#define L4_SIZE (131072*1024)
-
-#define NUM_OF_OPTIMIZATIONS 10
-
-#define NUM_OF_EVENTS 5
-
-extern int w1;
-extern int w2h1;
-extern int h2;
-
 #endif
