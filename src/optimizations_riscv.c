@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #include "mm_malloc.h"
 #include "config.h"
@@ -104,18 +105,19 @@ void matmul_lu(double* restrict prod,
 // Matrix Multiply registerBlock
 void matmul_rb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	#define REG_BLOCK1 4
-	#define REG_BLOCK2 4
+
+	#define REG_BLOCK1 8
+	#define REG_BLOCK2 2
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
 	{
-		for (int k = 0; k < WIDTH; k+=REG_BLOCK1)
+		for (int k = 0; k < WIDTH/REG_BLOCK1*REG_BLOCK1; k+=REG_BLOCK1)
 		{
 			#define CODE1(n) double scalarA##n=matA[i*WIDTH+k+n];
 			UNROLL(CODE1, REG_BLOCK1)
 			#undef CODE1
 
-			for (int j = 0; j < HEIGHT; j+= REG_BLOCK2) {
+			for (int j = 0; j < HEIGHT/REG_BLOCK2*REGBLOCK2; j+= REG_BLOCK2) {
 				#define CODE2(n) double vecP##n = prod[i*WIDTH+j+n];
 				UNROLL(CODE2, REG_BLOCK2)
 
@@ -128,6 +130,13 @@ void matmul_rb(double* restrict prod,
 				#undef CODE2
 				#undef CODE3
 				#undef CODE4
+			}
+		}
+		for (int k = WIDTH/REG_BLOCK1*REG_BLOCK1; k < WIDTH; k++)
+		{
+			double scalarA=matA[i*WIDTH+k];
+			for (int j = 0; j < HEIGHT; j++) {
+				prod[i*WIDTH+j+n] += scalarA*matB[k*WIDTH+j];
 			}
 		}
 	}
@@ -182,7 +191,7 @@ void matmul_omp_simd_cb(double* restrict prod,
 					__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
 					__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
 					__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
-					__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
+					__asm__ volatile( "  vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
 				}
 			}
 		}
@@ -221,14 +230,8 @@ void matmul_omp_simd_cb_lu(double* restrict prod,
 					__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_omp_simd_cb_lu):"memory");
 				}
 			}
-
 		}
-	}
 
-
-	// tail case
-	for (int i = 0; i < WIDTH; i++)
-	{
 		for (int k = WIDTH/CACHE_BLOCK*CACHE_BLOCK; k < WIDTH; k++)
 		{
 			volatile int64_t vector_size;
@@ -238,7 +241,7 @@ void matmul_omp_simd_cb_lu(double* restrict prod,
 				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
 				__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
 				__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
-				__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
+				__asm__ volatile("   vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
 			}
 		}
 	}
@@ -267,73 +270,11 @@ __asm__ (
 void __riscv_omp_simd_cb_lu_rb();
 void matmul_omp_simd_cb_lu_rb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	// CACHE_BLCOK needs to be a multiple of UNROLL_COUNT
-	// UNROLL_COUNT <= 31
-	const int CACHE_BLOCK = 31;
-	#define UNROLL_COUNT 31
-	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
-    __asm__ volatile ("vsetcfg 2, 1\n");
-//#pragma omp parallel
-//{
-	for (int kk = 0; kk < WIDTH/CACHE_BLOCK*CACHE_BLOCK; kk += CACHE_BLOCK)
-	{
-		//#pragma omp parallel for
-		for (int i = 0; i < WIDTH; i++)
-		{
-			for (int k = kk; k < kk+CACHE_BLOCK; k+=UNROLL_COUNT)
-			{
-				volatile int64_t vector_size;
-				#define CODE1(n) __asm__ volatile ("  vmss vs"#n", %0": :"r"(matA[i*WIDTH+k+n-1]));
-				UNROLLZ(CODE1, 1, UNROLL_COUNT)
-				for (int j = 0; j < HEIGHT; j+= vector_size)
-				{
-					__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
-					__asm__ volatile ("  vmsa va0, %0"::"r"(prod+i*WIDTH+j));
-					#define CODE2(n) __asm__ volatile ("  vmsa va"#n", %0"::"r"(matB+k*WIDTH+j+(n-1)*WIDTH));
-					UNROLLZ(CODE2, 1, UNROLL_COUNT)
-					__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_omp_simd_cb_lu_rb):"memory");
-				}
-			}
-
-		}
-	}
-
-
-	// tail case
-	for (int i = 0; i < WIDTH; i++)
-	{
-		for (int k = WIDTH/CACHE_BLOCK*CACHE_BLOCK; k < WIDTH; k++)
-		{
-			volatile int64_t vector_size;
-			__asm__ volatile ("  vmss vs1, %0": :"r"(matA[i*WIDTH+k]));
-			for (int j = 0; j < HEIGHT; j+= vector_size)
-			{
-				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
-				__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
-				__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
-				__asm__ volatile("vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
-			}
-		}
-	}
+	matmul_omp_simd_cb_lu(prod, matA, matB);
 }
 
-// __riscv_omp_simd_cb_lu
-__asm__ (
-		".align 3\n"
-		"__riscv_omp_simd_cb_lu_rb:\n"
-		"  vld vv0, va0\n");
-#define CODE3(n) __asm__ (		"  vld vv1, va"#n"\n" \
-								"  vfmadd.d vv0, vs"#n", vv1, vv0\n");
-UNROLLZ(CODE3, 1, UNROLL_COUNT)
-
-__asm__ (
-		"  vsd vv0, va0\n"
-		"  vstop\n");
-
-#undef UNROLL_COUNT
-#undef CODE1
-#undef CODE2
-#undef CODE3
 
 
+
+// ENDIF
 #endif

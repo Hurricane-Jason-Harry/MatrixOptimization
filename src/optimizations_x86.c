@@ -8,6 +8,7 @@
 #include "config.h"
 #include "boost.h"
 
+__attribute__((hot))
 void matmul_omp(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
@@ -25,6 +26,7 @@ void matmul_omp(double* restrict prod,
 	}
 }
 
+__attribute__((hot))
 void matmul_simd(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
@@ -33,21 +35,28 @@ void matmul_simd(double* restrict prod,
 		for (int k = 0; k < WIDTH; k++)
 		{
 			__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-			for (int j = 0; j < HEIGHT; j+=4)
+			int j = 0;
+			for (; j < HEIGHT/X86VEC*X86VEC; j+=X86VEC)
 			{
 				__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
 				__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
 				vecP = _mm256_fmadd_pd(scalarA, vecB,  vecP);
 				_mm256_store_pd(prod+i*WIDTH+j, vecP);
 			}
+			#if HEIGHT % X86VEC != 0
+			for (; j < HEIGHT; j++) {
+				prod[i*WIDTH+j] += matA[i*WIDTH+k]*matB[k*WIDTH+j];
+			}
+			#endif
 		}
 	}
 }
 
 // Matrix Multiply cacheBlock
+__attribute__((hot))
 void matmul_cb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	const int CACHE_BLOCK = 32;
+	const int CACHE_BLOCK = 16;
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 
 	for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK) {
@@ -66,9 +75,11 @@ void matmul_cb(double* restrict prod,
 
 
 // Matrix Multiply loopUnroll
+
+__attribute__((hot))
 void matmul_lu(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	#define UNROLL_COUNT 32
+	#define UNROLL_COUNT 64
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 	for (int i = 0; i < WIDTH; i++)
 	{
@@ -87,6 +98,7 @@ void matmul_lu(double* restrict prod,
 }
 
 // Matrix Multiply registerBlock
+__attribute__((hot))
 void matmul_rb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
 	#define REG_BLOCK1 4
@@ -121,6 +133,7 @@ void matmul_rb(double* restrict prod,
 }
 
 // Matrix Multiply openmp simd
+__attribute__((hot))
 void matmul_omp_simd(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
@@ -131,7 +144,7 @@ void matmul_omp_simd(double* restrict prod,
 		for (int k = 0; k < WIDTH; k++)
 		{
 			__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-			for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH)
+			for (int j = 0; j < HEIGHT; j+=X86VEC)
 			{
 				__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
 				__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
@@ -143,9 +156,10 @@ void matmul_omp_simd(double* restrict prod,
 }
 
 // Matrix Multiply openmp simd cacheBlock
+__attribute__((hot))
 void matmul_omp_simd_cb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	const int CACHE_BLOCK = 32;
+	const int CACHE_BLOCK = 64;
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
@@ -157,7 +171,7 @@ void matmul_omp_simd_cb(double* restrict prod,
 				for (int k = kk; k < kk+CACHE_BLOCK; k++)
 				{
 					__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-					for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH)
+					for (int j = 0; j < HEIGHT; j+=X86VEC)
 					{
 						__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
 						__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
@@ -171,10 +185,11 @@ void matmul_omp_simd_cb(double* restrict prod,
 }
 
 // Matrix Multiply openmp simd cacheBlock loopUnroll
+__attribute__((hot))
 void matmul_omp_simd_cb_lu(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	const int CACHE_BLOCK = 32;
-	#define UNROLL_COUNT 8
+	const int CACHE_BLOCK = 16;
+	#define UNROLL_COUNT 4
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
@@ -186,13 +201,13 @@ void matmul_omp_simd_cb_lu(double* restrict prod,
 				for (int k = kk; k < kk+CACHE_BLOCK; k++)
 				{
 					__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
-					for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH*UNROLL_COUNT)
+					for (int j = 0; j < HEIGHT; j+=X86VEC*UNROLL_COUNT)
 					{
 						__m256d vecB, vecP;
-						#define CODE(n) vecP = _mm256_load_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH);\
-								vecB = _mm256_load_pd(matB+k*WIDTH+j+n*X86_VECTOR_LENGTH);\
+						#define CODE(n) vecP = _mm256_load_pd(prod+i*WIDTH+j+n*X86VEC);\
+								vecB = _mm256_load_pd(matB+k*WIDTH+j+n*X86VEC);\
 								vecP = _mm256_fmadd_pd(scalarA, vecB, vecP);\
-								_mm256_store_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH, vecP);
+								_mm256_store_pd(prod+i*WIDTH+j+n*X86VEC, vecP);
 
 						UNROLL(CODE, UNROLL_COUNT)
 
@@ -206,16 +221,17 @@ void matmul_omp_simd_cb_lu(double* restrict prod,
 }
 
 // Matrix Multiply openmp simd cacheBlock loopUnroll registerBlock
+__attribute__((hot))
 void matmul_omp_simd_cb_lu_rb(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
-	const int CACHE_BLOCK = 32;
-	#define REG_BLOCK2 8
-	#define REG_BLOCK1 8
+	const int CACHE_BLOCK = 12;
+	#define REG_BLOCK1 12
+	#define REG_BLOCK2 1
 	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
 
 	#pragma omp parallel
 	{
-		for (int kk = 0; kk < WIDTH; kk += CACHE_BLOCK) {
+		for (int kk = 0; kk < WIDTH/CACHE_BLOCK*CACHE_BLOCK; kk += CACHE_BLOCK) {
 			#pragma omp for
 			for (int i = 0; i < WIDTH; i++)
 			{
@@ -225,16 +241,16 @@ void matmul_omp_simd_cb_lu_rb(double* restrict prod,
 					UNROLL(CODE1, REG_BLOCK1);
 					#undef CODE1
 
-					for (int j = 0; j < HEIGHT; j+=X86_VECTOR_LENGTH*REG_BLOCK2)
+					for (int j = 0; j < HEIGHT; j+=X86VEC*REG_BLOCK2)
 					{
-						#define CODE2(n) __m256d vecP##n = _mm256_load_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH);
+						#define CODE2(n) __m256d vecP##n = _mm256_load_pd(prod+i*WIDTH+j+n*X86VEC);
 						UNROLL(CODE2, REG_BLOCK2)
 
 						#define CODE3(n1, n2) vecP##n1 = _mm256_fmadd_pd(\
-							_mm256_load_pd(matB+k*WIDTH+j+X86_VECTOR_LENGTH*n1+WIDTH*n2), scalarA##n2, vecP##n1);
+							_mm256_load_pd(matB+k*WIDTH+j+X86VEC*n1+WIDTH*n2), scalarA##n2, vecP##n1);
 						UNROLL2(CODE3, REG_BLOCK1, REG_BLOCK2)
 
-						#define CODE4(n) _mm256_store_pd(prod+i*WIDTH+j+n*X86_VECTOR_LENGTH, vecP##n);
+						#define CODE4(n) _mm256_store_pd(prod+i*WIDTH+j+n*X86VEC, vecP##n);
 						UNROLL(CODE4, REG_BLOCK2)
 
 						#undef CODE2
@@ -244,7 +260,25 @@ void matmul_omp_simd_cb_lu_rb(double* restrict prod,
 				}
 			}
 		}
+
+
+		#pragma omp for
+		for (int i = 0; i < WIDTH; i++)
+		{
+			for (int k = WIDTH/CACHE_BLOCK*CACHE_BLOCK; k < WIDTH; k++)
+			{
+				__m256d scalarA = _mm256_broadcast_sd(matA+i*WIDTH+k);
+				for (int j = 0; j < HEIGHT; j+=X86VEC)
+				{
+					__m256d vecP = _mm256_load_pd(prod+i*WIDTH+j);
+					__m256d vecB = _mm256_load_pd(matB+k*WIDTH+j);
+					vecP = _mm256_fmadd_pd(scalarA, vecB,  vecP);
+					_mm256_store_pd(prod+i*WIDTH+j, vecP);
+				}
+			}
+		}
 	}
+
 	#undef REG_BLOCK1
 	#undef REG_BLOCK2
 }

@@ -12,7 +12,7 @@ int compare_matrix(const double* sample, const double* reference) {
 		if (abs(sample[i] - reference[i]) > 1e-10 ||
 				!(-1.0e308 < sample[i] && sample[i] < 1.0e308)) {
 			printf("difference at pos %d sample value: %f \n"
-				   "reference value: %f difference: %f", i, sample[i], reference[i],
+				   "reference value: %f difference: %f\n", i, sample[i], reference[i],
 				   sample[i]-reference[i]);
 			return 1;
 		}

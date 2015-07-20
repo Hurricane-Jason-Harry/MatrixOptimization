@@ -29,7 +29,7 @@ void matmul_optimize(double* prod, const double* matA, const double* matB) {
 	#ifdef MATMUL_NAIVE
 		matmul_naive(prod, matA, matB);
 	#elif defined (MATMUL_OMP)
-		matmul_omp(product, matA, matB);
+		matmul_omp(prod, matA, matB);
 	#elif defined (MATMUL_SIMD)
 		matmul_simd(prod, matA, matB);
 	#elif defined (MATMUL_CB)
