@@ -4,8 +4,8 @@
 #define ENABLE 1
 #define DISABLE 0
 
-#define WIDTH 2048
-#define HEIGHT 2048
+#define WIDTH 64
+#define HEIGHT 64
 
 #define W1 (WIDTH)
 #define H1W2 (HEIGHT)
@@ -14,6 +14,6 @@
 
 #define X86VEC 4
 
-#define TEST_FILENAME "test/test.out"
+#define TEST_FILENAME "/home/main/Desktop/MatrixOptimization/test/test.out"
 
 #endif

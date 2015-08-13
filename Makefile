@@ -1,101 +1,93 @@
-ifndef TIMES
-TIMES:=1
+SHELL := /bin/bash
+
+EMULATOR_DIR := /home/main/Desktop/rocket-chip/emulator
+EMULATOR_BIN := emulator-Top-HwachaCPPConfig # need to switch to emulator_dir before running bin
+#EMULATOR_ARG1 := +dramsim +verbose +max-cycles=50000000 $$RISCV/riscv64-unknown-elf/bin/pk # first argument following tested binary
+#EMULATOR_ARG2 := none 3>&1 1>&2 2>&3 | spike-dasm 1>/home/main/Desktop/ConvolutionOptimization/test.txt# second argument
+BENCHMARKDIR := benchmark
+EMULATOR_ARG1 := +max-cycles=20000000 $$RISCV/riscv64-unknown-elf/bin/pk # first argument following tested binary
+EMULATOR_ARG2 := 
+
+RUNDIR := run
+TESTDIR := test
+TESTFILE := $(TESTDIR)/test.out
+ARCHS := x86 riscv
+OPTIMIZATIONS := naive omp simd cb lu rb omp_simd omp_simd_cb omp_simd_cb_lu omp_simd_cb_lu_rb cb_profiling
+FILES := $(addprefix src/, main.c optimizations.c utils.c config.h mm_malloc.h \
+				optimizations.h unroll.h utils.h optimizations_x86.c optimizations_riscv.c mm_malloc.h)
+ARCH_OPTIMIZATIONS := $(foreach ARCH, $(ARCHS), $(addprefix $(ARCH)/, $(OPTIMIZATIONS)))
+
+define init
+	$(eval ARCH := $(strip $(subst /, , $(subst $(RUNDIR)/, , $(dir $@)))))
+	$(eval OPTIMIZATION := $(strip $(notdir $@)))
+	$(call $(ARCH))
+	$(eval OPTIMIZATION := $(shell echo $(OPTIMIZATION) | tr a-z A-Z))
+endef
+
+define x86
+	$(eval CXX := gcc)
+	$(eval CXX_FLAGS := -Wall -march=native -mavx2 -mfma -O3 -std=c99 -Wno-format -fopenmp -lm -lpthread)
+	$(eval CXX_FLAGS += $(EXTRA_FLAGS))
+	$(eval EXE_PREFIX:=)
+endef
+
+define riscv
+	$(eval CXX := riscv64-unknown-elf-gcc)
+	$(eval CXX_FLAGS := -Wall -O3 -march=RV64IMAFDXhwacha -Wno-format -mhwacha4 -std=c99 -lm)
+	$(eval CXX_FLAGS += $(EXTRA_FLAGS))
+	$(eval EXE_PREFIX := spike --l2=512:8:64 --isa=RV64IMAFDXhwacha pk)
+endef
+
+ifneq ($(wildcard Makefrag_profiling), )
+include Makefrag_profiling
 endif
+	
+$(TESTDIR) $(RUNDIR):
+	mkdir -p $@
+	
+$(addprefix $(RUNDIR)/, $(ARCHS)): | $(RUNDIR)
+	mkdir -p $@
 
-RISCV_CXX:=riscv64-unknown-elf-gcc
-RISCV_CXX_FLAGS:= -Wall -O3 -march=RV64IMAFDXhwacha -Wno-format -mhwacha4 -std=c99 -lm -o main
+$(TESTDIR)/make_ref_data: src/make_ref_data.c src/config.h | $(TESTDIR)
+	gcc -Wall -std=c99 $^ -o $@ 
 
-RISCV_SPIKE:= spike --l2=512:8:64 --isa=RV64IMAFDXhwacha pk -c 
-ifdef ASSEM
-RISCV_CXX_FLAGS= -Wall -O3 -fomit-frame-pointer -march=RV64IMAFDXhwacha -mhwacha4  -std=c99 -lm -S
-endif
+$(TESTDIR)/flush_cache: src/flush_cache.c | $(TESTDIR)
+	gcc -Wall -std=c99 -O0 -fopenmp $^ -o $@ 
+		
+$(ARCH)_all: $(ARCH_OPTIMIZATIONS)
+	
+$(addprefix $(RUNDIR)/, $(ARCH_OPTIMIZATIONS)) : $(FILES) | $(addprefix $(RUNDIR)/, $(ARCHS))
+	$(call init)
+	$(CXX) $(CXX_FLAGS) $(FILES) -D MATMUL_$(OPTIMIZATION) -o $@
 
-X86_CXX:=gcc
-X86_CXX_FLAGS:=-Wall -march=native -pipe -mavx2 -mfma -O3 -std=c99 -Wno-format -fopenmp -lm -ldl -lpthread -o main
-CFILES:=src/main.c src/optimizations.c src/utils.c
 
-CMAKE_TEST_FILES:=src/make_test.c
-MAKE_TEST_FLAGS:= -Wall -std=c99 -lm -o make_testfile
+# Phony targets
+make_ref_data flush_cache : %: $(TESTDIR)/%
+	$<
 
-X86_FLUSH_CACHE_FILES:=src/x86_flush_cache.c
-X86_FLUSH_CACHE_FLAGS:= -Wall -std=c99 -O0 -fopenmp -o x86_flush_cache
-OPT:=_OP_NAIVE
+$(TESTFILE): $(TESTDIR)/make_ref_data
+	$(TESTDIR)/make_ref_data
 	
-all: naive omp simd cb lu rb omp_simd omp_simd_cb \
-     omp_simd_cb_lu omp_simd_cb_lu_rb
-		 
-naive:
-	@echo naive:
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_NAIVE
-	
-omp:
-	@echo openmp:
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP
-	
-simd:
-	@echo simd:
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_SIMD
-	
-cb:
-	@echo cacheBlock
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_CB
+$(ARCH_OPTIMIZATIONS) : % : $(RUNDIR)/% $(TESTFILE)
+	$(call init)
+	@echo Running optimization $(OPTIMIZATION)---
+	$(EXE_PREFIX) $<
 
-lu:
-	@echo loopUnroll
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_LU
-	
-rb:
-	@echo registerBlock
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_RB
-	
-omp_simd:
-	@echo openmp_simd
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD
-	
-omp_simd_cb:
-	@echo openmp_simd_cacheBlock
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB
-	
-omp_simd_cb_lu:
-	@echo openmp_simd_cacheBlock_loopUnroll
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB_LU
-
-omp_simd_cb_lu_rb:
-	@echo openmp_simd_cacheBlock_loopnUnroll_registerBlock
-	@$(MAKE) -s $(ISA)_basic OPT=MATMUL_OMP_SIMD_CB_LU_RB
-	
-testfile:
-	$(X86_CXX) $(MAKE_TEST_FLAGS) $(CMAKE_TEST_FILES)
-	./make_testfile
-
-x86_basic:
-	$(MAKE) -s clean
-	$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT)
-	$(MAKE) x86_flush_cache
-	$(foreach num,$(shell seq 1 $(TIMES)), ./main;)
-
-	
-x86_flush_cache:
-	$(X86_CXX) $(X86_FLUSH_CACHE_FLAGS) $(X86_FLUSH_CACHE_FILES) 
-	./x86_flush_cache
-	
-riscv_basic:
-	$(MAKE) -s clean
-	$(RISCV_CXX) $(RISCV_CXX_FLAGS) $(CFILES) -D $(OPT)
-	$(RISCV_SPIKE) ./main
+$(addsuffix .benchmark, $(ARCH_OPTIMIZATIONS)) : %.$(BENCHMARKDIR) : $(RUNDIR)/% $(TESTFILE)
+	$(call init)
+	mkdir -p $(BENCHMARKDIR)/$(ARCH)
+	@echo Running benchmark
+	@$(EXE_PREFIX) $<  > $(BENCHMARKDIR)/$@
+	$(eval CURRENTDIR := $(shell pwd))
+	$(eval condition := $(filter riscv, $(ARCH)))
+	$(if $(condition), cd $(EMULATOR_DIR) && ./$(EMULATOR_BIN)  \
+		$(EMULATOR_ARG1) $(CURRENTDIR)/$<  $(EMULATOR_ARG2))
+	cd $(CURRENTDIR)
 	
 clean:
-	rm -f main make_testfile x86_flush_cache *.o
-
-#@number=1;\
-#result=0;\
-#while [ $$number -le $(TIMES) ];do\
-#		$(MAKE) -s clean;\
-#		$(X86_CXX) $(X86_CXX_FLAGS) $(CFILES) -D $(OPT);\
-#		$(MAKE) -B -s x86_flush_cache;\
-#		output=$$(./main);\
-#		result=$$(echo $$output + $$result | bc);\
-#		number=$$(($$number+1)); \
-#	done;\
-#result=$$(echo $$result / $(TIMES) | bc);\
-#echo $$result;
+	rm -f -r $(TESTDIR) $(RUNDIR)
+				 
+.PHONY: flush_cache make_ref_data 
+.PHONY: $(ARCH_OPTIMIZATIONS)
+.PHONY: clean
+.PHONY: $(addsuffix .benchmark, $(ARCH_OPTIMIZATIONS))  # do benchmark. Output to $(benchmark/$(ARCH_OPTIMIZATIONS).out

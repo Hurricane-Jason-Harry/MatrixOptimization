@@ -20,7 +20,7 @@ void matmul_omp_simd(double* prod, const double* matA, const double* matB);
 
 void matmul_omp_simd_cb(double* prod, const double* matA, const double* matB);
 
-void malmul_omp_simd_cb_lu(double* prod, const double* matA, const double* matB);
+void matmul_omp_simd_cb_lu(double* prod, const double* matA, const double* matB);
 
 void matmul_omp_simd_cb_lu_rb(double* prod, const double* matA, const double* matB);
 

@@ -6,7 +6,7 @@
 
 #include "mm_malloc.h"
 #include "config.h"
-#include "boost.h"
+#include "unroll.h"
 
 void matmul_omp(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
@@ -117,7 +117,7 @@ void matmul_rb(double* restrict prod,
 			UNROLL(CODE1, REG_BLOCK1)
 			#undef CODE1
 
-			for (int j = 0; j < HEIGHT/REG_BLOCK2*REGBLOCK2; j+= REG_BLOCK2) {
+			for (int j = 0; j < HEIGHT/REG_BLOCK2*REG_BLOCK2; j+= REG_BLOCK2) {
 				#define CODE2(n) double vecP##n = prod[i*WIDTH+j+n];
 				UNROLL(CODE2, REG_BLOCK2)
 
@@ -136,7 +136,7 @@ void matmul_rb(double* restrict prod,
 		{
 			double scalarA=matA[i*WIDTH+k];
 			for (int j = 0; j < HEIGHT; j++) {
-				prod[i*WIDTH+j+n] += scalarA*matB[k*WIDTH+j];
+				prod[i*WIDTH+j] += scalarA*matB[k*WIDTH+j];
 			}
 		}
 	}
@@ -232,16 +232,18 @@ void matmul_omp_simd_cb_lu(double* restrict prod,
 			}
 		}
 
-		for (int k = WIDTH/CACHE_BLOCK*CACHE_BLOCK; k < WIDTH; k++)
-		{
-			volatile int64_t vector_size;
-			__asm__ volatile ("  vmss vs1, %0": :"r"(matA[i*WIDTH+k]));
-			for (int j = 0; j < HEIGHT; j+= vector_size)
+		for (int i = 0; i < WIDTH; i++) {
+			for (int k = WIDTH/CACHE_BLOCK*CACHE_BLOCK; k < WIDTH; k++)
 			{
-				__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
-				__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
-				__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
-				__asm__ volatile("   vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
+				volatile int64_t vector_size;
+				__asm__ volatile ("  vmss vs1, %0": :"r"(matA[i*WIDTH+k]));
+				for (int j = 0; j < HEIGHT; j+= vector_size)
+				{
+					__asm__ volatile ("  vsetvl %0, %1\n": "=r"(vector_size) : "r"(HEIGHT-j));
+					__asm__ volatile ("  vmsa va0, %0"::"r"(matB+k*WIDTH+j));
+					__asm__ volatile ("  vmsa va1, %0"::"r"(prod+i*WIDTH+j));
+					__asm__ volatile("   vf 0(%0)\n": :"r"(&__riscv_simd):"memory");
+				}
 			}
 		}
 	}

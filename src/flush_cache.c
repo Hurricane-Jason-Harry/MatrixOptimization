@@ -1,8 +1,10 @@
 #include <stdlib.h>
 // Should be compiled without compiler optimization
 int main() {
+#ifdef _OPENMP
 #pragma omp parallel
 	{
+#endif
      const int size = 64*1024*1024; // Allocate 64M for each core.
                                     // Set much larger then L2
      int* c = (int*)malloc(size);
@@ -10,6 +12,8 @@ int main() {
        for (int j = 0; j < size/sizeof(int); j++)
          c[j] = i*j;
      free(c);
+#ifdef _OPENMP
 	}
+#endif
      return 0;
  }

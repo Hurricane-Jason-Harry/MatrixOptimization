@@ -1,12 +1,7 @@
 #include <assert.h>
+#include <string.h>
 #include "optimizations.h"
 #include "config.h"
-
-#ifdef __AVX2__
-#include "optimizations_x86.c"
-#elif defined __riscv
-#include "optimizations_riscv.c"
-#endif
 
 void matmul_naive(double* restrict prod,
 		const double* restrict matA, const double* restrict matB) {
@@ -24,6 +19,39 @@ void matmul_naive(double* restrict prod,
 		}
 	}
 }
+
+// Matrix Multiply cacheBlock
+#ifdef MATMUL_CB_PROFILING
+
+__attribute__((hot))
+void matmul_cb_profiling(double* restrict prod,
+		const double* restrict matA, const double* restrict matB) {
+	const int C1 = CACHE1; // need to prefined CACHE1,2,3 in gcc flags
+	const int C2 = CACHE2;
+	const int C3 = CACHE3;
+	memset(prod, 0, WIDTH*HEIGHT*sizeof(double));
+
+
+	for (int ii = 0; ii < WIDTH; ii += C1) {
+		for (int kk = 0; kk < WIDTH; kk += C2) {
+			for (int jj = 0; jj < HEIGHT; jj += C3) {
+				for (int i = ii; i < ii+C1; i++)
+				{
+					for (int k = kk; k < kk+C2; k++)
+					{
+						double scalarA = matA[i*WIDTH+k];
+						for (int j = jj; j < jj+C3;j++) {
+							prod[i*WIDTH+j] += scalarA*matB[k*WIDTH+j];
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+#endif
+
 
 void matmul_optimize(double* prod, const double* matA, const double* matB) {
 	#ifdef MATMUL_NAIVE
@@ -46,7 +74,9 @@ void matmul_optimize(double* prod, const double* matA, const double* matB) {
 		matmul_omp_simd_cb_lu(prod, matA, matB);
 	#elif defined (MATMUL_OMP_SIMD_CB_LU_RB)
 		matmul_omp_simd_cb_lu_rb(prod, matA, matB);
+	#elif defined (MATMUL_CB_PROFILING)
+		matmul_cb_profiling(prod, matA, matB);
 	#else
-		assert(0);
+		#error "No such optimization."
 	#endif
 }

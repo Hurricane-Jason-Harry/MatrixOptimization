@@ -33,7 +33,7 @@ int read_matrix_dimension(const char* filename, int* w1, int* h1w2,
 
 int read_matrix(const char* filename, double* prod, double* matA, double* matB) {
 	FILE* file = fopen(filename, "rb");
-	fseek(file, 3*sizeof(int), SEEK_SET);
+	fseek(file, 3*sizeof(int), SEEK_SET); // disable for chisel
 	if (!file) return 1;
 	if (fread(prod, sizeof(double), W1*H2, file) < W1*H2) return 2;
 	if (fread(matA, sizeof(double), W1*H1W2, file) < W1*H1W2) return 2;
